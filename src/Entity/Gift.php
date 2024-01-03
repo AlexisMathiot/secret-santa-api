@@ -19,6 +19,9 @@ class Gift
 
     #[ORM\Column(type: Types::TEXT)]
     #[Groups("getGifts")]
+    #[Assert\NotBlank(message: "Le nom du cadeau est obligatoire")]
+    #[Assert\Length(min: 1, max: 255, minMessage: "Le nom doit faire au moins {{ limit }} caractères",
+        maxMessage: "Le titre ne peut pas faire plus de {{ limit }} caractères")]
     private ?string $name = null;
 
     #[ORM\ManyToOne(inversedBy: 'gifts')]
