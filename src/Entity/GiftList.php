@@ -20,7 +20,7 @@ class GiftList
     #[ORM\OneToMany(mappedBy: 'giftList', targetEntity: Gift::class)]
     private Collection $gifts;
 
-    #[ORM\ManyToOne(inversedBy: 'giftList')]
+    #[ORM\OneToOne(inversedBy: 'giftList')]
     private ?User $user = null;
 
     public function __construct()

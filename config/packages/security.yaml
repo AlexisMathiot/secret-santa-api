@@ -15,9 +15,9 @@ security:
       security: false
         #    main:
         #      lazy: true
-        #      provider: app_user_providerfdd719e8855fdf770a5141fd0afb817b
+      #      provider: app_user_providerfdd719e8855fdf770a5141fd0afb817b
 
-        #      json_login:
+      #      json_login:
       #        check_path: api_login
       #      access_token:
       #        token_handler: App\Security\AccessTokenHandler
@@ -45,7 +45,7 @@ security:
   access_control:
     - { path: ^/api/login, roles: PUBLIC_ACCESS }
     - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
-
+    - { path: ^/api/amin, roles: ADMIN }
 
 when@test:
   security:

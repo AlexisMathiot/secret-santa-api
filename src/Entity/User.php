@@ -23,7 +23,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 180, unique: true, nullable: true)]
     private ?string $email = null;
 
-
     #[ORM\Column]
     private array $roles = [];
 
@@ -39,13 +38,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: AccessToken::class)]
     private Collection $accessTokens;
 
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: GiftList::class)]
-    private Collection $giftList;
+    #[ORM\OneToOne(mappedBy: 'user', targetEntity: GiftList::class)]
+    private GiftList $giftList;
 
     public function __construct()
     {
         $this->accessTokens = new ArrayCollection();
-        $this->giftList = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -180,32 +178,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return Collection<int, GiftList>
+     * @return GiftList
      */
-    public function getGiftList(): Collection
+    public function getGiftList(): GiftList
     {
         return $this->giftList;
     }
 
     public function addGiftList(GiftList $giftList): static
     {
-        if (!$this->giftList->contains($giftList)) {
-            $this->giftList->add($giftList);
-            $giftList->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeGiftList(GiftList $giftList): static
-    {
-        if ($this->giftList->removeElement($giftList)) {
-            // set the owning side to null (unless already changed)
-            if ($giftList->getUser() === $this) {
-                $giftList->setUser(null);
-            }
-        }
-
+        $this->giftList = $giftList;
         return $this;
     }
 
