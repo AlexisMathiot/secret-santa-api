@@ -39,9 +39,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: AccessToken::class)]
     private Collection $accessTokens;
 
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: GiftList::class)]
+    private Collection $giftList;
+
     public function __construct()
     {
         $this->accessTokens = new ArrayCollection();
+        $this->giftList = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -169,6 +173,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($accessToken->getUser() === $this) {
                 $accessToken->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, GiftList>
+     */
+    public function getGiftList(): Collection
+    {
+        return $this->giftList;
+    }
+
+    public function addGiftList(GiftList $giftList): static
+    {
+        if (!$this->giftList->contains($giftList)) {
+            $this->giftList->add($giftList);
+            $giftList->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeGiftList(GiftList $giftList): static
+    {
+        if ($this->giftList->removeElement($giftList)) {
+            // set the owning side to null (unless already changed)
+            if ($giftList->getUser() === $this) {
+                $giftList->setUser(null);
             }
         }
 

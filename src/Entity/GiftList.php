@@ -20,6 +20,9 @@ class GiftList
     #[ORM\OneToMany(mappedBy: 'giftList', targetEntity: Gift::class)]
     private Collection $gifts;
 
+    #[ORM\ManyToOne(inversedBy: 'giftList')]
+    private ?User $user = null;
+
     public function __construct()
     {
         $this->gifts = new ArrayCollection();
@@ -56,6 +59,18 @@ class GiftList
                 $gift->setGiftList(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
 
         return $this;
     }
