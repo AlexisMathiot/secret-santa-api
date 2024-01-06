@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
@@ -17,28 +18,34 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $id = null;
 
+    #[Groups("userList")]
     #[ORM\Column(length: 180, unique: true)]
     private ?string $username = null;
 
+    #[Groups("userList")]
     #[ORM\Column(length: 180, unique: true, nullable: true)]
     private ?string $email = null;
 
+    #[Groups("userList")]
     #[ORM\Column]
     private array $roles = [];
 
     /**
      * @var string The hashed password
      */
+    #[Groups("userList")]
     #[ORM\Column]
     private ?string $password = null;
 
+    #[Groups("userList")]
     #[ORM\OneToOne(targetEntity: self::class, cascade: ['persist', 'remove'])]
     private ?self $santaOf = null;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: AccessToken::class)]
     private Collection $accessTokens;
 
-    #[ORM\OneToOne(mappedBy: 'user', targetEntity: GiftList::class)]
+    #[Groups("userList")]
+    #[ORM\OneToOne(mappedBy: 'user', targetEntity: GiftList::class, cascade: ['persist', 'remove'])]
     private GiftList $giftList;
 
     public function __construct()
@@ -188,6 +195,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function addGiftList(GiftList $giftList): static
     {
         $this->giftList = $giftList;
+        $this->giftList->setUser($this);
         return $this;
     }
 

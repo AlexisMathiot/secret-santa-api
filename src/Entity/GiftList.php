@@ -14,9 +14,10 @@ class GiftList
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups("userList")]
     private ?int $id = null;
 
-    #[Groups("getGifts")]
+    #[Groups(["userList"])]
     #[ORM\OneToMany(mappedBy: 'giftList', targetEntity: Gift::class)]
     private Collection $gifts;
 

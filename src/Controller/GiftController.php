@@ -19,15 +19,14 @@ class GiftController extends AbstractController
     #[Route('/api/gift/{id}', name: 'deleteGift', methods: ['DELETE'])]
     public function deleteGift(Gift $gift, EntityManagerInterface $em): JsonResponse
     {
-
         $em->remove($gift);
         $em->flush();
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
-    #[Route('/api/gift', name: "addGift", methods: ['POST'])]
-    public function createBook(Request                $request,
+    #[Route('/api/gift', name: "createGift", methods: ['POST'])]
+    public function createGift(Request                $request,
                                SerializerInterface    $serializer,
                                EntityManagerInterface $em,
                                UrlGeneratorInterface  $urlGenerator): JsonResponse
@@ -40,12 +39,16 @@ class GiftController extends AbstractController
         $user = $this->getUser();
 
         $giftlist = $user->getGiftList();
-
+        $giftlist->addGift($gift);
         $em->flush();
 
         $jsonGiftlist = $serializer->serialize($gift, 'json', ['groups' => 'getGift']);
 
-        $location = $urlGenerator->generate('detailBook', ['id' => $giftlist->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $location = $urlGenerator->generate(
+            'detailBook',
+            ['id' => $giftlist->getId()],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
 
         return new JsonResponse($jsonGiftlist, Response::HTTP_CREATED, ["Location" => $location], true);
     }
