@@ -45,7 +45,7 @@ class AdminController extends AbstractController
 
         $giftlist = new GiftList();
 
-        $user->addGiftList($giftlist);
+        $user->setGiftList($giftlist);
 
         $em->persist($user);
         $em->flush();
@@ -101,7 +101,5 @@ class AdminController extends AbstractController
         $message = "User with username {$username} not found";
         return new JsonResponse($message, Response::HTTP_NOT_FOUND);
     }
-
-
 
 }

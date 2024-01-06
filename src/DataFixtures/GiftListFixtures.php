@@ -4,6 +4,7 @@ namespace App\DataFixtures;
 
 use App\Entity\GiftList;
 use App\Repository\GiftRepository;
+use App\Repository\UserRepository;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
@@ -12,7 +13,7 @@ class GiftListFixtures extends Fixture implements DependentFixtureInterface
 {
 
 
-    public function __construct(private readonly GiftRepository $giftRepository)
+    public function __construct(private readonly GiftRepository $giftRepository, private readonly UserRepository $userRepository)
     {
     }
 
@@ -20,11 +21,14 @@ class GiftListFixtures extends Fixture implements DependentFixtureInterface
     {
 
         $gifts = $this->giftRepository->findAll();
+        $users = $this->userRepository->findAll();
 
-        for ($i = 0; $i < 5; $i++) {
+        foreach ($users as $user) {
 
             $giftList = new GiftList();
+            $user->setGiftList($giftList);
             $giftsIndex = array_rand($gifts, 5);
+
             foreach ($giftsIndex as $index) {
                 $giftList->addGift($gifts[$index]);
             }
@@ -39,6 +43,7 @@ class GiftListFixtures extends Fixture implements DependentFixtureInterface
     {
         return [
             GiftFixtures::class,
+            UserFixtures::class
         ];
     }
 }

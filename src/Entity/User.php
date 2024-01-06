@@ -3,8 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -41,17 +39,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToOne(targetEntity: self::class, cascade: ['persist', 'remove'])]
     private ?self $santaOf = null;
 
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: AccessToken::class)]
-    private Collection $accessTokens;
+    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    private ?GiftList $giftList = null;
 
-    #[Groups("userList")]
-    #[ORM\OneToOne(mappedBy: 'user', targetEntity: GiftList::class, cascade: ['persist', 'remove'])]
-    private GiftList $giftList;
-
-    public function __construct()
-    {
-        $this->accessTokens = new ArrayCollection();
-    }
 
     public function getId(): ?int
     {
@@ -154,48 +144,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * @return Collection<int, AccessToken>
-     */
-    public function getAccessTokens(): Collection
-    {
-        return $this->accessTokens;
-    }
-
-    public function addAccessToken(AccessToken $accessToken): static
-    {
-        if (!$this->accessTokens->contains($accessToken)) {
-            $this->accessTokens->add($accessToken);
-            $accessToken->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeAccessToken(AccessToken $accessToken): static
-    {
-        if ($this->accessTokens->removeElement($accessToken)) {
-            // set the owning side to null (unless already changed)
-            if ($accessToken->getUser() === $this) {
-                $accessToken->setUser(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return GiftList
-     */
-    public function getGiftList(): GiftList
+    public function getGiftList(): ?GiftList
     {
         return $this->giftList;
     }
 
-    public function addGiftList(GiftList $giftList): static
+    public function setGiftList(?GiftList $giftList): static
     {
         $this->giftList = $giftList;
-        $this->giftList->setUser($this);
+
         return $this;
     }
 

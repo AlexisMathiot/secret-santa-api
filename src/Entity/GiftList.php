@@ -6,6 +6,8 @@ use App\Repository\GiftListRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\JoinColumn;
+use Doctrine\ORM\Mapping\OneToOne;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: GiftListRepository::class)]
@@ -14,15 +16,12 @@ class GiftList
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups("userList")]
+    #[Groups("getGifts")]
     private ?int $id = null;
 
-    #[Groups(["userList"])]
+    #[Groups(["getGifts"])]
     #[ORM\OneToMany(mappedBy: 'giftList', targetEntity: Gift::class)]
     private Collection $gifts;
-
-    #[ORM\OneToOne(inversedBy: 'giftList')]
-    private ?User $user = null;
 
     public function __construct()
     {
@@ -64,15 +63,4 @@ class GiftList
         return $this;
     }
 
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): static
-    {
-        $this->user = $user;
-
-        return $this;
-    }
 }
