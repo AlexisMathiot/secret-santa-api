@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class GiftController extends AbstractController
 {
@@ -20,7 +21,7 @@ class GiftController extends AbstractController
     /**
      * @throws ORMException
      */
-    #[Route('/api/gift/{id}', name: 'deleteGift', methods: ['DELETE'])]
+    #[Route('/api/gift/{id}', name: 'gift_delete', methods: ['DELETE'])]
     public function deleteGift(Gift $gift, EntityManagerInterface $em): JsonResponse
     {
         /** @var User $user */
@@ -40,7 +41,7 @@ class GiftController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
-    #[Route('/api/gifts', name: "listGift", methods: ['GET'])]
+    #[Route('/api/gifts', name: "gift_list", methods: ['GET'])]
     public function getGift(SerializerInterface $serializer): JsonResponse
     {
 
@@ -53,14 +54,21 @@ class GiftController extends AbstractController
         return new JsonResponse($jsonGiftlist, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/api/gift', name: "createGift", methods: ['POST'])]
+    #[Route('/api/gift', name: "gift_create", methods: ['POST'])]
     public function createGift(Request                $request,
                                SerializerInterface    $serializer,
                                EntityManagerInterface $em,
-                               UrlGeneratorInterface  $urlGenerator): JsonResponse
+                               UrlGeneratorInterface  $urlGenerator,
+                               ValidatorInterface     $validator): JsonResponse
     {
 
         $gift = $serializer->deserialize($request->getContent(), Gift::class, 'json');
+        $errors = $validator->validate($gift);
+
+        if ($errors->count() > 0) {
+            return new JsonResponse($serializer->serialize($errors, 'json'), Response::HTTP_BAD_REQUEST);
+        }
+
         $em->persist($gift);
 
         /** @var User $user */
@@ -73,7 +81,7 @@ class GiftController extends AbstractController
         $jsonGiftlist = $serializer->serialize($gift, 'json', ['groups' => 'getGift']);
 
         $location = $urlGenerator->generate(
-            'listGift',
+            'gift_list',
             ['id' => $giftlist->getId()],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
@@ -81,4 +89,32 @@ class GiftController extends AbstractController
         return new JsonResponse($jsonGiftlist, Response::HTTP_CREATED, ["Location" => $location], true);
     }
 
+    #[Route('api/gift/{id}', name: "gift_update", methods: ['PUT'])]
+    public function updateGift(Gift                   $gift,
+                               SerializerInterface    $serializer,
+                               Request                $request,
+                               ValidatorInterface     $validator,
+                               EntityManagerInterface $em): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+        $giftlist = $user->getGiftList();
+
+        if (!$giftlist->getGifts()->contains($gift)) {
+            return new JsonResponse('Vous n\'avez pas les droits pour modifier ce cadeau', Response::HTTP_FORBIDDEN);
+        }
+
+        $newGift = $serializer->deserialize($request->getContent(), Gift::class, 'json');
+        $gift->setName($newGift->getName());
+
+        $errors = $validator->validate($gift);
+        if ($errors->count() > 0) {
+            return new JsonResponse($serializer->serialize($errors, 'json'), Response::HTTP_BAD_REQUEST, [], true);
+        }
+
+        $em->persist($gift);
+        $em->flush();
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
 }

@@ -7,6 +7,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
@@ -18,6 +19,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[Groups("userList")]
     #[ORM\Column(length: 180, unique: true)]
+    #[Assert\NotBlank(message: "Le nom d'utilisateur est obligatoire")]
     private ?string $username = null;
 
     #[Groups("userList")]

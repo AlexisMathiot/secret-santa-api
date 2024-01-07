@@ -6,6 +6,7 @@ use App\Entity\GiftList;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use PHPUnit\Util\Xml\Validator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,11 +16,12 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class AdminController extends AbstractController
 {
 
-    #[Route('/api/admin/users', name: "userList", methods: ['GET'])]
+    #[Route('/api/admin/users', name: "user_list", methods: ['GET'])]
     public function userList(UserRepository $userRepository, SerializerInterface $serializer): JsonResponse
     {
         $userlist = $userRepository->findAll();
@@ -29,35 +31,7 @@ class AdminController extends AbstractController
         return new JsonResponse($jsonUserlistJson, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/api/admin/user', name: "createUser", methods: ['POST'])]
-    public function createUser(Request                     $request,
-                               SerializerInterface         $serializer,
-                               UserPasswordHasherInterface $passwordHasher,
-                               EntityManagerInterface      $em,
-                               UrlGeneratorInterface       $urlGenerator): JsonResponse
-    {
-
-        /** @var User $user */
-        $user = $serializer->deserialize($request->getContent(), User::class, 'json');
-
-        $user->setPassword($passwordHasher->hashPassword($user, $user->getPassword()));
-        $user->setRoles(["ROLE_USER"]);
-
-        $giftlist = new GiftList();
-
-        $user->setGiftList($giftlist);
-
-        $em->persist($user);
-        $em->flush();
-
-        $jsonUser = $serializer->serialize($user, 'json');
-
-        $location = $urlGenerator->generate('userList', [], UrlGeneratorInterface::ABSOLUTE_URL);
-
-        return new JsonResponse($jsonUser, Response::HTTP_CREATED, ["Location" => $location], true);
-    }
-
-    #[Route('/api/admin/user/{username}', name: "deleteUser", methods: ['DELETE'])]
+    #[Route('/api/admin/user/{username}', name: "user_delete", methods: ['DELETE'])]
     public function deleteUser(UserRepository         $userRepository,
                                string                 $username,
                                EntityManagerInterface $em): JsonResponse
@@ -77,12 +51,14 @@ class AdminController extends AbstractController
 
     }
 
-    #[Route('/api/admin/user/{username}', name: "updateUser", methods: ['PUT'])]
-    public function updateUser(Request                $request,
-                               SerializerInterface    $serializer,
-                               string                 $username,
-                               EntityManagerInterface $em,
-                               UserRepository         $userRepository): JsonResponse
+    #[Route('/api/admin/user/{username}', name: "user_update", methods: ['PUT'])]
+    public function updateUser(Request                     $request,
+                               SerializerInterface         $serializer,
+                               string                      $username,
+                               EntityManagerInterface      $em,
+                               UserRepository              $userRepository,
+                               ValidatorInterface          $validator,
+                               UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $currentUser = $userRepository->findOneBy(['username' => $username]);
 
@@ -92,6 +68,13 @@ class AdminController extends AbstractController
                 'json',
                 [AbstractNormalizer::OBJECT_TO_POPULATE => $currentUser]
             );
+
+            $errors = $validator->validate($updateUser);
+            if ($errors->count() > 0) {
+                return new JsonResponse($serializer->serialize($errors, 'json'), Response::HTTP_BAD_REQUEST, [], true);
+            }
+
+            $updateUser->setPassword($passwordHasher->hashPassword($updateUser, $updateUser->getPassword()));
 
             $em->persist($updateUser);
             $em->flush();
