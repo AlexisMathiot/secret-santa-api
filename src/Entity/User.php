@@ -41,6 +41,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToOne(targetEntity: self::class, cascade: ['persist', 'remove'])]
     private ?self $santaOf = null;
 
+    #[Groups("userList")]
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
     private ?GiftList $giftList = null;
 

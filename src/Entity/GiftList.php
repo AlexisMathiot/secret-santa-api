@@ -16,7 +16,7 @@ class GiftList
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups("getGifts")]
+    #[Groups(["getGifts", "userList"])]
     private ?int $id = null;
 
     #[Groups(["getGifts"])]
