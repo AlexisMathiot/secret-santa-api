@@ -16,10 +16,10 @@ class GiftList
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getGifts", "userList"])]
+    #[Groups(["getGifts", "userList", "userDetail"])]
     private ?int $id = null;
 
-    #[Groups(["getGifts"])]
+    #[Groups(["getGifts", "userDetail"])]
     #[ORM\OneToMany(mappedBy: 'giftList', targetEntity: Gift::class)]
     private Collection $gifts;
 

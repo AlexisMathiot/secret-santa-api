@@ -49,7 +49,7 @@ class GiftController extends AbstractController
         $user = $this->getUser();
         $giftlist = $user->getGiftList();
 
-        $jsonGiftlist = $serializer->serialize($giftlist, 'json', ['groups' => 'getGifts']);
+        $jsonGiftlist = $serializer->serialize(["id_user" => $user->getId(), "gift_list" => $giftlist], 'json', ['groups' => 'getGifts']);
 
         return new JsonResponse($jsonGiftlist, Response::HTTP_OK, [], true);
     }

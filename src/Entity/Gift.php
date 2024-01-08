@@ -14,11 +14,11 @@ class Gift
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups("getGifts")]
+    #[Groups(["getGifts", "userDetail"])]
     private ?int $id = null;
 
     #[ORM\Column(type: Types::TEXT)]
-    #[Groups("getGifts")]
+    #[Groups(["getGifts", "userDetail"])]
     #[Assert\NotBlank(message: "Le nom du cadeau est obligatoire")]
     #[Assert\Length(min: 1, max: 255, minMessage: "Le nom doit faire au moins {{ limit }} caractères",
         maxMessage: "Le titre ne peut pas faire plus de {{ limit }} caractères")]

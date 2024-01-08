@@ -31,6 +31,18 @@ class AdminController extends AbstractController
         return new JsonResponse($jsonUserlistJson, Response::HTTP_OK, [], true);
     }
 
+    #[Route('/api/admin/user/{username}', name: "user_detail", methods: ['GET'])]
+    public function userDetail(UserRepository      $userRepository,
+                               SerializerInterface $serializer,
+                               string              $username): JsonResponse
+    {
+        $user = $userRepository->findOneBy(['username' => $username]);
+
+        $jsonUserlistJson = $serializer->serialize($user, 'json', ['groups' => 'userDetail']);
+
+        return new JsonResponse($jsonUserlistJson, Response::HTTP_OK, [], true);
+    }
+
     #[Route('/api/admin/user/{username}', name: "user_delete", methods: ['DELETE'])]
     public function deleteUser(UserRepository         $userRepository,
                                string                 $username,
