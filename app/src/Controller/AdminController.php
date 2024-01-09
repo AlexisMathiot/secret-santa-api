@@ -34,10 +34,30 @@ class AdminController extends AbstractController
                                string              $username): JsonResponse
     {
         $user = $userRepository->findOneBy(['username' => $username]);
+        $userSanta = $user->getSantaOf();
 
-        $jsonUserlistJson = $serializer->serialize($user, 'json', ['groups' => 'userDetail']);
+        $userArray = [
+            'id' => $user->getId(),
+            'userName' => $user->getUsername(),
+            'email' => $user->getEmail(),
+            'roles' => $user->getRoles(),
+            'userGiftListId' => $user->getGiftList()->getId()
+        ];
 
-        return new JsonResponse($jsonUserlistJson, Response::HTTP_OK, [], true);
+        if ($user->getGiftList() !== null) {
+            $gifts = $user->getGiftList()->getGifts();
+            $userArray['gifts'] = $gifts;
+        }
+
+        if ($userSanta !== null) {
+            $userArray['SantaOfId'] = $userSanta->getId();
+            $userArray['SantaOf'] = $userSanta->getUsername();
+            $userArray['SantaOfGiftsLists'] = $userSanta->getGiftList()->getGifts();
+        }
+
+        $jsonUser = $serializer->serialize($userArray, 'json', ['groups' => 'userDetail']);
+
+        return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
     }
 
     #[Route('/api/admin/user/{username}', name: "user_delete", methods: ['DELETE'])]
