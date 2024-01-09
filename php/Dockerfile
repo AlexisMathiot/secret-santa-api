@@ -6,9 +6,9 @@ RUN apt-get update \
     && pecl install apcu \
     && docker-php-ext-enable apcu \
     && docker-php-ext-configure zip \
-    && docker-php-ext-install zip \
+    && docker-php-ext-install zip
 
-RUN a2enmod ssl && a2enmod rewrite
+RUN a2enmod rewrite && a2enmod ssl && a2enmod socache_shmcb
 
 WORKDIR /var/www
 
