@@ -2,18 +2,15 @@
 
 namespace App\Controller;
 
-use App\Entity\GiftList;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use PHPUnit\Util\Xml\Validator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -97,4 +94,23 @@ class AdminController extends AbstractController
         return new JsonResponse($message, Response::HTTP_NOT_FOUND);
     }
 
+    #[Route('/api/admin/users/setsanta', name: "user_set_santa", methods: ['GET'])]
+    public function setSanta(UserRepository $userRepository, EntityManagerInterface $em): JsonResponse
+    {
+        $users = $userRepository->findAll();
+
+        foreach ($users as $user) {
+            $user->setSantaOf(null);
+        }
+
+        foreach ($users as $i => $user) {
+            $user->setSantaOf($users[($i + 1) % count($users)]);
+        }
+
+        $em->flush();
+        $message = 'Pères Noel attribués';
+
+        return new JsonResponse($message, Response::HTTP_OK, [], true);
+
+    }
 }
