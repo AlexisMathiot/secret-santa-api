@@ -2,7 +2,6 @@
 
 namespace App\DataFixtures;
 
-use App\Entity\GiftList;
 use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
@@ -18,7 +17,7 @@ class UserFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        // Création d'un user "normal"
+        // Création d'un user
         $user = new User();
         $user->setUsername('Tata');
         $user->setEmail("user@santaapi.com");

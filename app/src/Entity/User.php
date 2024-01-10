@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\JoinColumn;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -45,7 +46,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?self $santaOf = null;
 
     #[Groups("userList")]
-    #[ORM\OneToOne(cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(targetEntity: GiftList::class, cascade: ['persist', 'remove'])]
+    #[JoinColumn(name: 'gift_list_id', referencedColumnName: 'id', onDelete: 'cascade')]
     private ?GiftList $giftList = null;
 
     public function getId(): ?int

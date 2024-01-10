@@ -21,7 +21,7 @@ class GiftList
     private ?int $id = null;
 
     #[Groups(["getGifts", "userDetail"])]
-    #[ORM\OneToMany(mappedBy: 'giftList', targetEntity: Gift::class)]
+    #[ORM\OneToMany(mappedBy: 'giftList', targetEntity: Gift::class, cascade: ['remove'])]
     private Collection $gifts;
 
     public function __construct()

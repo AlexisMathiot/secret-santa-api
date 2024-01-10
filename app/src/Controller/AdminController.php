@@ -69,6 +69,10 @@ class AdminController extends AbstractController
         $user = $userRepository->findOneBy(['username' => $username]);
 
         if ($user !== null) {
+            $userSanta = $userRepository->findOneBy(['santaOf' => $user]);
+            $userSanta?->setSantaOf(null);
+            $user->setSantaOf(null);
+            $em->flush();
             $em->remove($user);
             $em->flush();
 
@@ -100,7 +104,8 @@ class AdminController extends AbstractController
 
             $errors = $validator->validate($updateUser);
             if ($errors->count() > 0) {
-                return new JsonResponse($serializer->serialize($errors, 'json'), Response::HTTP_BAD_REQUEST, [], true);
+                return new JsonResponse($serializer->serialize($errors, 'json'),
+                    Response::HTTP_BAD_REQUEST, [], true);
             }
 
             $updateUser->setPassword($passwordHasher->hashPassword($updateUser, $updateUser->getPassword()));
