@@ -1,24 +1,21 @@
 /.idea
 /mysql
 ###> symfony/framework-bundle ###
-./app/.env.local
-./app/.env.local.php
-./app/.env.*.local
-./app/config/secrets/prod/prod.decrypt.private.php
-./app/public/bundles/
+/app/.env.local
+/app/.env.test
+/app/.env.local.php
+/app/.env.*.local
+/app/config/secrets/prod/prod.decrypt.private.php
+/app/public/bundles/
 app/var
 app/vendor
+app/config/jwt
 ###< symfony/framework-bundle ###
 
 ###> phpunit/phpunit ###
 /phpunit.xml
 .phpunit.result.cache
 ###< phpunit/phpunit ###
-
-###> symfony/phpunit-bridge ###
-.phpunit.result.cache
-/phpunit.xml
-###< symfony/phpunit-bridge ###
 
 ###> symfony/asset-mapper ###
 /app/public/assets/
