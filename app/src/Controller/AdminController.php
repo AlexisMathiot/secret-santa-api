@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Service\UserData;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,33 +32,20 @@ class AdminController extends AbstractController
     #[Route('/api/admin/user/{username}', name: "user_detail", methods: ['GET'])]
     public function userDetail(UserRepository      $userRepository,
                                SerializerInterface $serializer,
-                               string              $username): JsonResponse
+                               string              $username,
+                               UserData            $userData
+    ): JsonResponse
     {
         $user = $userRepository->findOneBy(['username' => $username]);
-        $userSanta = $user->getSantaOf();
-
-        $userArray = [
-            'id' => $user->getId(),
-            'userName' => $user->getUsername(),
-            'email' => $user->getEmail(),
-            'roles' => $user->getRoles(),
-            'userGiftListId' => $user->getGiftList()->getId()
-        ];
-
-        if ($user->getGiftList() !== null) {
-            $gifts = $user->getGiftList()->getGifts();
-            $userArray['gifts'] = $gifts;
+        if ($user !== null) {
+            $userArray = $userData->userDataToArray($user);
+            $jsonUser = $serializer->serialize($userArray, 'json', ['groups' => 'userDetail']);
+            return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
         }
 
-        if ($userSanta !== null) {
-            $userArray['SantaOfId'] = $userSanta->getId();
-            $userArray['SantaOf'] = $userSanta->getUsername();
-            $userArray['SantaOfGiftsLists'] = $userSanta->getGiftList()->getGifts();
-        }
+        $message = "Utilisateur avec le username {$username} n'existe pas";
+        return new JsonResponse($message, Response::HTTP_NOT_FOUND, [], true);
 
-        $jsonUser = $serializer->serialize($userArray, 'json', ['groups' => 'userDetail']);
-
-        return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
     }
 
     #[Route('/api/admin/user/{username}', name: "user_delete", methods: ['DELETE'])]
