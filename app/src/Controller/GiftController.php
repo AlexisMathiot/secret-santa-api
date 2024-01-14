@@ -21,7 +21,7 @@ class GiftController extends AbstractController
     /**
      * @throws ORMException
      */
-    #[Route('/api/gift/{id}', name: 'gift_delete', methods: ['DELETE'])]
+    #[Route('/api/gifts/{id}', name: 'gift_delete', methods: ['DELETE'])]
     public function deleteGift(Gift $gift, EntityManagerInterface $em): JsonResponse
     {
         /** @var User $user */
@@ -41,6 +41,14 @@ class GiftController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
+    #[Route('/api/gifts/{id}', name: "gift_detail", methods: 'GET')]
+    public function getGiftDetail(Gift $gift, SerializerInterface $serializer): JsonResponse
+    {
+        $jsonGift = $serializer->serialize($gift, 'json');
+        return new JsonResponse($jsonGift, Response::HTTP_OK, [], true);
+
+    }
+
     #[Route('/api/gifts', name: "gift_list", methods: ['GET'])]
     public function getGift(SerializerInterface $serializer): JsonResponse
     {
@@ -49,12 +57,12 @@ class GiftController extends AbstractController
         $user = $this->getUser();
         $giftlist = $user->getGiftList();
 
-        $jsonGiftlist = $serializer->serialize(["id_user" => $user->getId(), "gift_list" => $giftlist], 'json', ['groups' => 'getGifts']);
+        $jsonGiftlist = $serializer->serialize(["id_user" => $user->getId(), "gift_list" => $giftlist], 'json', ['groups' => 'getGift']);
 
         return new JsonResponse($jsonGiftlist, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/api/gift', name: "gift_create", methods: ['POST'])]
+    #[Route('/api/gifts', name: "gift_create", methods: ['POST'])]
     public function createGift(Request                $request,
                                SerializerInterface    $serializer,
                                EntityManagerInterface $em,
@@ -81,15 +89,15 @@ class GiftController extends AbstractController
         $jsonGiftlist = $serializer->serialize($gift, 'json', ['groups' => 'getGift']);
 
         $location = $urlGenerator->generate(
-            'gift_list',
-            ['id' => $giftlist->getId()],
+            'gift_detail',
+            ['id' => $gift->getId()],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
 
         return new JsonResponse($jsonGiftlist, Response::HTTP_CREATED, ["Location" => $location], true);
     }
 
-    #[Route('api/gift/{id}', name: "gift_update", methods: ['PUT'])]
+    #[Route('api/gifts/{id}', name: "gift_update", methods: ['PUT'])]
     public function updateGift(Gift                   $gift,
                                SerializerInterface    $serializer,
                                Request                $request,

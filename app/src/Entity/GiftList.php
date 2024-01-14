@@ -17,10 +17,10 @@ class GiftList
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getGifts", "userList", "userDetail"])]
+    #[Groups(["getGift", "userList", "userDetail"])]
     private ?int $id = null;
 
-    #[Groups(["getGifts", "userDetail"])]
+    #[Groups(["getGift", "userDetail"])]
     #[ORM\OneToMany(mappedBy: 'giftList', targetEntity: Gift::class, cascade: ['remove'])]
     private Collection $gifts;
 
