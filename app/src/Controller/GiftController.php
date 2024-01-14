@@ -44,7 +44,7 @@ class GiftController extends AbstractController
     #[Route('/api/gifts/{id}', name: "gift_detail", methods: 'GET')]
     public function getGiftDetail(Gift $gift, SerializerInterface $serializer): JsonResponse
     {
-        $jsonGift = $serializer->serialize($gift, 'json');
+        $jsonGift = $serializer->serialize($gift, 'json', ['groups' => 'getGift']);
         return new JsonResponse($jsonGift, Response::HTTP_OK, [], true);
 
     }
