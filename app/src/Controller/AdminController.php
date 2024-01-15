@@ -96,7 +96,10 @@ class AdminController extends AbstractController
                     Response::HTTP_BAD_REQUEST, [], true);
             }
 
-            $updateUser->setPassword($passwordHasher->hashPassword($updateUser, $updateUser->getPassword()));
+            $sendPassword = $serializer->deserialize($request->getContent(), User::class, 'json')->getPassword();
+            if ($sendPassword !== null) {
+                $updateUser->setPassword($passwordHasher->hashPassword($updateUser, $sendPassword));
+            }
 
             $em->persist($updateUser);
             $em->flush();
