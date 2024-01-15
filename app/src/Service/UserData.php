@@ -9,6 +9,8 @@ class UserData
 
     public function userDataToArray(User $user): array
     {
+        $giftsArray = [];
+        $giftsSantaArray = [];
         $userSanta = $user->getSantaOf();
         $userArray = [
             'id' => $user->getId(),
@@ -20,13 +22,21 @@ class UserData
 
         if ($user->getGiftList() !== null) {
             $gifts = $user->getGiftList()->getGifts();
-            $userArray['gifts'] = $gifts;
+            foreach ($gifts as $gift) {
+                $giftsArray[] = [$gift->getId(), $gift->getName()];
+            }
+            $userArray['gifts'] = $giftsArray;
         }
 
         if ($userSanta !== null) {
             $userArray['SantaOfId'] = $userSanta->getId();
             $userArray['SantaOf'] = $userSanta->getUsername();
-            $userArray['SantaOfGiftsLists'] = $userSanta->getGiftList()->getGifts();
+            if ($userSanta->getGiftList() !== null) {
+                foreach ($userSanta->getGiftList()->getGifts() as $gift) {
+                    $giftsSantaArray[] = [$gift->getId(), $gift->getName()];
+                }
+                $userArray['SantaOfGiftsLists'] = $giftsSantaArray;
+            }
         }
 
         return $userArray;
