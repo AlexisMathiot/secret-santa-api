@@ -26,7 +26,10 @@ class UserData
         if ($userSanta !== null) {
             $userArray['SantaOfId'] = $userSanta->getId();
             $userArray['SantaOf'] = $userSanta->getUsername();
-            $userArray['SantaOfGiftsLists'] = $userSanta->getGiftList()->getGifts();
+            if ($userSanta->getGiftList() !== null) {
+
+                $userArray['SantaOfGiftsLists'] = $userSanta->getGiftList()->getGifts();
+            }
         }
 
         return $userArray;

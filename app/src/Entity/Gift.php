@@ -14,7 +14,7 @@ class Gift
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups(["getGift", "userDetai"])]
+    #[Groups(["getGift", "userDetail"])]
     private ?int $id = null;
 
     #[ORM\Column(type: Types::TEXT)]
