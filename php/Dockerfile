@@ -13,11 +13,13 @@ RUN pecl install xdebug-3.3.1 \
     && echo "xdebug.mode=debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo "xdebug.client_host=host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
-RUN a2enmod rewrite && a2enmod ssl && a2enmod socache_shmcb
-
 COPY ./php.ini /usr/local/etc/php
 
 WORKDIR /var/www
+
+RUN chown -R www-data:www-data /var/www && a2enmod rewrite ssl
+
+RUN mkdir /etc/apache2/sites-available/ssl
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
