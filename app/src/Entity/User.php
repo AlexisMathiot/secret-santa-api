@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\JoinColumn;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -20,16 +22,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $id = null;
 
-    #[Groups(["userList"])]
+    #[Groups(["userList", "eventDetail"])]
     #[ORM\Column(length: 180, unique: true)]
     #[Assert\NotBlank(message: "Le nom d'utilisateur est obligatoire")]
     private ?string $username = null;
 
-    #[Groups("userList")]
+    #[Groups(["userList", "eventDetail"])]
     #[ORM\Column(length: 180, unique: true, nullable: true)]
     private ?string $email = null;
 
-    #[Groups("userList")]
+    #[Groups(["userList", "eventDetail"])]
     #[ORM\Column]
     private array $roles = [];
 
@@ -48,6 +50,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToOne(targetEntity: GiftList::class, cascade: ['persist', 'remove'])]
     #[JoinColumn(name: 'gift_list_id', referencedColumnName: 'id', onDelete: 'cascade')]
     private ?GiftList $giftList = null;
+
+    #[ORM\ManyToMany(targetEntity: Event::class, mappedBy: 'users')]
+    private Collection $events;
+
+    #[ORM\OneToMany(mappedBy: 'organizer', targetEntity: Event::class)]
+    private Collection $eventsOrganize;
+
+    public function __construct()
+    {
+        $this->events = new ArrayCollection();
+        $this->eventsOrganize = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -158,6 +172,63 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setGiftList(?GiftList $giftList): static
     {
         $this->giftList = $giftList;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Event>
+     */
+    public function getEvents(): Collection
+    {
+        return $this->events;
+    }
+
+    public function addEvent(Event $event): static
+    {
+        if (!$this->events->contains($event)) {
+            $this->events->add($event);
+            $event->addUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeEvent(Event $event): static
+    {
+        if ($this->events->removeElement($event)) {
+            $event->removeUser($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Event>
+     */
+    public function getEventsOrganize(): Collection
+    {
+        return $this->eventsOrganize;
+    }
+
+    public function addEventsOrganize(Event $eventsOrganize): static
+    {
+        if (!$this->eventsOrganize->contains($eventsOrganize)) {
+            $this->eventsOrganize->add($eventsOrganize);
+            $eventsOrganize->setOrganizer($this);
+        }
+
+        return $this;
+    }
+
+    public function removeEventsOrganize(Event $eventsOrganize): static
+    {
+        if ($this->eventsOrganize->removeElement($eventsOrganize)) {
+            // set the owning side to null (unless already changed)
+            if ($eventsOrganize->getOrganizer() === $this) {
+                $eventsOrganize->setOrganizer(null);
+            }
+        }
 
         return $this;
     }

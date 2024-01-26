@@ -24,9 +24,9 @@ class AdminController extends AbstractController
     {
         $userlist = $userRepository->findAll();
 
-        $jsonUserlistJson = $serializer->serialize($userlist, 'json', ['groups' => 'userList']);
+        $jsonUserlist = $serializer->serialize($userlist, 'json', ['groups' => 'userList']);
 
-        return new JsonResponse($jsonUserlistJson, Response::HTTP_OK, [], true);
+        return new JsonResponse($jsonUserlist, Response::HTTP_OK, [], true);
     }
 
     #[Route('/api/admin/user/{username}', name: "user_detail", methods: ['GET'])]
