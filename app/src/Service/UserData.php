@@ -10,6 +10,7 @@ class UserData
     public function userDataToArray(User $user): array
     {
         $userSanta = $user->getSantaOf();
+        $userEvents = $user->getEvents();
         $userArray = [
             'id' => $user->getId(),
             'userName' => $user->getUsername(),
@@ -30,6 +31,10 @@ class UserData
 
                 $userArray['SantaOfGiftsLists'] = $userSanta->getGiftList()->getGifts();
             }
+        }
+
+        if ($userEvents->count() > 0) {
+            $userArray['events'] = $userEvents;
         }
 
         return $userArray;

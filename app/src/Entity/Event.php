@@ -16,10 +16,12 @@ class Event
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups("userDetail")]
     private ?int $id = null;
 
     #[Assert\NotBlank(message: "Le nom de l'évènement est obligatoire")]
     #[ORM\Column(length: 255)]
+    #[Groups("userDetail")]
     private ?string $name = null;
 
     #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'events')]
