@@ -101,7 +101,7 @@ class EventController extends AbstractController
     }
 
 
-    #[Route('api/events/{userId}/{eventId}', name: 'add_event_user', methods: ['GET'])]
+    #[Route('api/events/add/{userId}/{eventId}', name: 'add_event_user', methods: ['GET'])]
     public function addUserEvent(int                    $userId,
                                  int                    $eventId,
                                  UserRepository         $userRepository,
@@ -129,6 +129,59 @@ class EventController extends AbstractController
 
     }
 
+    #[Route('api/events/remove/{userId}/{eventId}', name: 'remove_event_user', methods: ['GET'])]
+    public function removeUserEvent(int                    $userId,
+                                    int                    $eventId,
+                                    UserRepository         $userRepository,
+                                    EventRepository        $eventRepository,
+                                    EntityManagerInterface $em
+    ): JsonResponse
+    {
+        $user = $userRepository->findOneBy(['id' => $userId]);
+        $event = $eventRepository->findOneBy(['id' => $eventId]);
+
+        $this->denyAccessUnlessGranted('edit', $event);
+
+        if ($user !== null && $event !== null) {
+            if ($event->getUsers()->contains($user)) {
+                $event->removeUser($user);
+                $em->flush();
+
+                $userName = $user->getUsername();
+                $eventName = $event->getName();
+                $message = "L'utilisateur {$userName} a été retiré de l'évènement {$eventName}";
+
+                return new JsonResponse($message, Response::HTTP_OK, [], true);
+            }
+        }
+
+        return new JsonResponse('Utilisateur ou évènement non trouvé', Response::HTTP_BAD_REQUEST, [], true);
+
+    }
+
+    #[Route('api/events/organizer/{userId}/{eventId}', name: 'set_organizer', methods: ['GET'])]
+    public function setOrganizer(int                    $userId,
+                                 int                    $eventId,
+                                 UserRepository         $userRepository,
+                                 EventRepository        $eventRepository,
+                                 EntityManagerInterface $em
+    ): JsonResponse
+    {
+        $user = $userRepository->findOneBy(['id' => $userId]);
+        $event = $eventRepository->findOneBy((['id' => $eventId]));
+
+        $this->denyAccessUnlessGranted('edit', $event);
+
+        if ($user !== null && $event !== null) {
+            $event->setOrganizer($user);
+            $em->flush();
+
+            return new JsonResponse('Organisateur modifié', Response::HTTP_OK, [], true);
+        }
+
+        return new JsonResponse('Utilisateur ou évènement non trouvé', Response::HTTP_BAD_REQUEST, [], true);
+    }
+
     /**
      * @throws ORMException
      */
@@ -146,5 +199,4 @@ class EventController extends AbstractController
         }
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
-
 }
