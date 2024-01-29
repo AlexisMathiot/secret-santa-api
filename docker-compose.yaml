@@ -13,6 +13,8 @@ services:
       - '4306:3306'
     volumes:
       - ./mysql:/var/lib/mysql
+    networks:
+      - dev
 
   php:
     container_name: php
@@ -32,6 +34,8 @@ services:
       - ./apache/ssl:/etc/apache2/sites-available/ssl
     depends_on:
       - database
+    networks:
+      - dev
 
   phpma:
     image: phpmyadmin
@@ -44,3 +48,18 @@ services:
       UPLOAD_LIMIT: 20M
     ports:
       - "8899:80"
+    networks:
+      - dev
+
+  maildev:
+    image: maildev/maildev
+    container_name: maildev_docker_symfony
+    command: bin/maildev --web 80 --smtp 25 --hide-extensions STARTTLS
+    ports:
+      - "8081:80"
+    restart: always
+    networks:
+      - dev
+
+networks:
+  dev:
