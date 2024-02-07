@@ -9,7 +9,6 @@ use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 
 class EventVoter extends Voter
 {
-// these strings are just invented: you can use anything
     const DELETE = 'delete';
     const EDIT = 'edit';
 

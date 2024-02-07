@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.3-apache
 
 RUN apt-get update \
     && apt-get install -y zlib1g-dev g++ git libicu-dev zip libzip-dev zip \
@@ -17,7 +17,7 @@ COPY ./php.ini /usr/local/etc/php
 
 WORKDIR /var/www
 
-RUN chown -R www-data:www-data /var/www && a2enmod rewrite ssl
+RUN chown -R www-data:www-data /var/www && a2enmod rewrite ssl && a2enmod headers
 
 RUN mkdir /etc/apache2/sites-available/ssl
 
