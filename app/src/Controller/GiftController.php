@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Gift;
+use App\Entity\GiftList;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
@@ -62,8 +63,9 @@ class GiftController extends AbstractController
         return new JsonResponse($jsonGiftlist, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/api/gifts', name: "gift_create", methods: ['POST'])]
+    #[Route('/api/gifts/{id}', name: "gift_create", methods: ['POST'])]
     public function createGift(Request                $request,
+                               GiftList               $giftList,
                                SerializerInterface    $serializer,
                                EntityManagerInterface $em,
                                UrlGeneratorInterface  $urlGenerator,
@@ -81,9 +83,7 @@ class GiftController extends AbstractController
 
         /** @var User $user */
         $user = $this->getUser();
-
-        $giftlist = $user->getGiftList();
-        $giftlist->addGift($gift);
+        $giftList->addGift($gift);
         $em->flush();
 
         $jsonGiftlist = $serializer->serialize($gift, 'json', ['groups' => 'getGift']);
@@ -97,7 +97,7 @@ class GiftController extends AbstractController
         return new JsonResponse($jsonGiftlist, Response::HTTP_CREATED, ["Location" => $location], true);
     }
 
-    #[Route('api/gifts/{id}', name: "gift_update", methods: ['PUT'])]
+    #[Route('/api/gifts/{id}', name: "gift_update", methods: ['PUT'])]
     public function updateGift(Gift                   $gift,
                                SerializerInterface    $serializer,
                                Request                $request,
@@ -124,5 +124,22 @@ class GiftController extends AbstractController
         $em->flush();
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/api/giftslist', name: "gift_list_create", methods: ['POST'])]
+    public function createGiftList(EntityManagerInterface $em): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        $giftlist = new GiftList();
+        $em->persist($giftlist);
+
+        $user->addGiftList($giftlist);
+
+        $em->flush();
+
+        return new JsonResponse('Liste de cadeaux crée', Response::HTTP_OK, [], true);
+
     }
 }

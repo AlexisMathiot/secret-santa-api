@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\JoinColumn;
+use Doctrine\ORM\Mapping\ManyToOne;
 use Doctrine\ORM\Mapping\OneToOne;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Serializer\Attribute\MaxDepth;
@@ -23,6 +24,25 @@ class GiftList
     #[Groups(["getGift", "userDetail"])]
     #[ORM\OneToMany(mappedBy: 'giftList', targetEntity: Gift::class, cascade: ['remove'])]
     private Collection $gifts;
+
+    #[ManyToOne(targetEntity: User::class, inversedBy: 'giftList')]
+    #[JoinColumn(name: 'user_id', referencedColumnName: 'id')]
+    private User|null $user = null;
+
+    #[ORM\ManyToOne(inversedBy: 'giftList')]
+    private ?Event $event = null;
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
+
+        return $this;
+    }
 
     public function __construct()
     {
@@ -60,6 +80,18 @@ class GiftList
                 $gift->setGiftList(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getEvent(): ?Event
+    {
+        return $this->event;
+    }
+
+    public function setEvent(?Event $event): static
+    {
+        $this->event = $event;
 
         return $this;
     }

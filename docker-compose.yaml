@@ -32,15 +32,3 @@ services:
       - ./apache/ssl:/etc/apache2/sites-available/ssl
     depends_on:
       - database
-
-  phpma:
-    image: phpmyadmin
-    container_name: phpmyadmin
-    environment:
-      PMA_ARBITRARY: 1
-      PMA_HOST: database
-      PMA_USER: root
-      PMA_PASSWORD: root
-      UPLOAD_LIMIT: 20M
-    ports:
-      - "8899:80"

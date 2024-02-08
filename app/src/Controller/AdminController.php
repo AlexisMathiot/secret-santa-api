@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Event;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\UserData;
@@ -110,10 +111,10 @@ class AdminController extends AbstractController
         return new JsonResponse($message, Response::HTTP_NOT_FOUND);
     }
 
-    #[Route('/api/admin/users/setsanta', name: "user_set_santa", methods: ['GET'])]
-    public function setSanta(UserRepository $userRepository, EntityManagerInterface $em): JsonResponse
+    #[Route('/api/admin/users/setsanta/{id}', name: "user_set_santa", methods: ['GET'])]
+    public function setSanta(EntityManagerInterface $em, Event $event): JsonResponse
     {
-        $users = $userRepository->findAll();
+        $users = $event->getUsers();
 
         foreach ($users as $user) {
             $user->setSantaOf(null);

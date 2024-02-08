@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Event;
 use App\Entity\User;
 use App\Repository\EventRepository;
+use App\Repository\GiftListRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
@@ -199,4 +200,27 @@ class EventController extends AbstractController
         }
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
+
+    #[Route('/api/events/{idEvent}/{idList}', name: 'add_gift_list_event', methods: ['GET'])]
+    public function addGiftListToEvent(EventRepository        $eventRepository,
+                                       GiftListRepository     $giftListRepository,
+                                       EntityManagerInterface $em,
+                                       int                    $idList,
+                                       int                    $idEvent
+    ): JsonResponse
+    {
+        $giftList = $giftListRepository->findOneBy(['id' => $idList]);
+        $event = $eventRepository->findOneBy(['id' => $idEvent]);
+
+        if ($giftList !== null && $event !== null) {
+            $event->addGiftList($giftList);
+            $em->flush();
+
+            return new JsonResponse('List ajouté');
+        }
+
+        return new JsonResponse('List ou évènement non trouvé');
+
+    }
+
 }

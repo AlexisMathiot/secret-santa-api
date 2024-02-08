@@ -47,9 +47,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?self $santaOf = null;
 
     #[Groups("userList")]
-    #[ORM\OneToOne(targetEntity: GiftList::class, cascade: ['persist', 'remove'])]
-    #[JoinColumn(name: 'gift_list_id', referencedColumnName: 'id', onDelete: 'cascade')]
-    private ?GiftList $giftList = null;
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: GiftList::class, cascade: ['persist', 'remove'])]
+    private Collection|null $giftList = null;
 
     #[ORM\ManyToMany(targetEntity: Event::class, mappedBy: 'users')]
     private Collection $events;
@@ -59,6 +58,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
+        $this->giftList = new ArrayCollection();
         $this->events = new ArrayCollection();
         $this->eventsOrganize = new ArrayCollection();
     }
@@ -164,14 +164,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getGiftList(): ?GiftList
+    /**
+     * @return Collection<int, GiftList>
+     */
+    public function getGiftList(): Collection
     {
         return $this->giftList;
     }
 
-    public function setGiftList(?GiftList $giftList): static
+    public function addGiftList(GiftList $giftList): static
     {
-        $this->giftList = $giftList;
+        if (!$this->giftList->contains($giftList)) {
+            $this->giftList->add($giftList);
+            $giftList->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeGiftList(GiftList $giftList): static
+    {
+        if ($this->giftList->removeElement($giftList)) {
+            if ($giftList->getUser() === $this) {
+                $giftList->setUser(null);
+            }
+        }
 
         return $this;
     }

@@ -31,9 +31,13 @@ class Event
     #[ORM\JoinColumn(nullable: false)]
     private ?User $organizer = null;
 
+    #[ORM\OneToMany(mappedBy: 'event', targetEntity: GiftList::class)]
+    private Collection $giftList;
+
     public function __construct()
     {
         $this->users = new ArrayCollection();
+        $this->giftList = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -85,6 +89,36 @@ class Event
     public function setOrganizer(?User $organizer): static
     {
         $this->organizer = $organizer;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, GiftList>
+     */
+    public function getGiftList(): Collection
+    {
+        return $this->giftList;
+    }
+
+    public function addGiftList(GiftList $giftList): static
+    {
+        if (!$this->giftList->contains($giftList)) {
+            $this->giftList->add($giftList);
+            $giftList->setEvent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeGiftList(GiftList $giftList): static
+    {
+        if ($this->giftList->removeElement($giftList)) {
+            // set the owning side to null (unless already changed)
+            if ($giftList->getEvent() === $this) {
+                $giftList->setEvent(null);
+            }
+        }
 
         return $this;
     }
