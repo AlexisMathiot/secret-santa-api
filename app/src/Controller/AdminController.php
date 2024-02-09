@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\UserData;
 use Doctrine\ORM\EntityManagerInterface;
+use phpDocumentor\Reflection\Types\Collection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -116,6 +117,10 @@ class AdminController extends AbstractController
     {
         $users = $event->getUsers();
 
+        if ($users->count() <= 1) {
+            return new JsonResponse('Il doit y aboir au moins 2 personnes participant a l\'évènement');
+        }
+
         foreach ($users as $user) {
             $user->setSantaOf(null);
         }
@@ -130,4 +135,5 @@ class AdminController extends AbstractController
         return new JsonResponse($message, Response::HTTP_OK, [], true);
 
     }
+
 }

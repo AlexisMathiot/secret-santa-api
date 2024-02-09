@@ -3,9 +3,15 @@
 namespace App\Service;
 
 use App\Entity\User;
+use App\Repository\GiftListRepository;
 
 class UserData
 {
+
+    public function __construct(private readonly GiftListRepository $giftListRepository)
+    {
+
+    }
 
     public function userDataToArray(User $user): array
     {
@@ -16,25 +22,22 @@ class UserData
             'userName' => $user->getUsername(),
             'email' => $user->getEmail(),
             'roles' => $user->getRoles(),
-            'userGiftListId' => $user->getGiftList()->getId()
         ];
 
-        if ($user->getGiftList() !== null) {
-            $gifts = $user->getGiftList()->getGifts();
-            $userArray['gifts'] = $gifts;
-        }
-
-        if ($userSanta !== null) {
-            $userArray['SantaOfId'] = $userSanta->getId();
-            $userArray['SantaOf'] = $userSanta->getUsername();
-            if ($userSanta->getGiftList() !== null) {
-
-                $userArray['SantaOfGiftsLists'] = $userSanta->getGiftList()->getGifts();
-            }
-        }
-
         if ($userEvents->count() > 0) {
-            $userArray['events'] = $userEvents;
+            foreach ($userEvents as $k => $event) {
+                $i = 0;
+                $giftList = $this->giftListRepository->findOneBy([
+                    'event' => $event,
+                    'user' => $user
+                ]);
+                $eventArray = [
+                    'id' => $event->getId(),
+                    'name' => $event->getName(),
+                    'giftList' => $giftList,
+                ];
+                $userArray['events'][$k] = $eventArray;
+            }
         }
 
         return $userArray;

@@ -213,6 +213,11 @@ class EventController extends AbstractController
         $event = $eventRepository->findOneBy(['id' => $idEvent]);
 
         if ($giftList !== null && $event !== null) {
+
+            if ($event->getGiftList()->contains($giftList)) {
+                return new JsonResponse('Vous avez déjà une liste de cadeau pour cette évènement');
+            }
+
             $event->addGiftList($giftList);
             $em->flush();
 
