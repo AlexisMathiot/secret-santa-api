@@ -30,6 +30,7 @@ class GiftList
     private User|null $user = null;
 
     #[ORM\ManyToOne(inversedBy: 'giftList')]
+    #[ORM\JoinColumn(onDelete: 'cascade')]
     private ?Event $event = null;
 
     public function getUser(): ?User

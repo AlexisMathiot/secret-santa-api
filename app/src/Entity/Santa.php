@@ -3,10 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\SantaRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: SantaRepository::class)]
 class Santa
@@ -17,6 +14,7 @@ class Santa
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'santas')]
+    #[ORM\JoinColumn(onDelete: 'cascade')]
     private ?Event $event = null;
 
     #[ORM\ManyToOne(inversedBy: 'santas')]
