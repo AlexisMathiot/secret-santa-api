@@ -53,7 +53,7 @@ class Santa
         return $this;
     }
 
-    public function setSanta(User $santa): static
+    public function setSanta(?User $santa): static
     {
         $this->santa = $santa;
         return $this;
