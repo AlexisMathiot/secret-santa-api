@@ -25,13 +25,6 @@ class GiftController extends AbstractController
     #[Route('/api/gifts/{id}', name: 'gift_delete', methods: ['DELETE'])]
     public function deleteGift(Gift $gift, EntityManagerInterface $em): JsonResponse
     {
-        /** @var User $user */
-        $user = $this->getUser();
-        $userGiftList = $user->getGiftList();
-
-        if (!$userGiftList->getGifts()->contains($gift)) {
-            return new JsonResponse('Vous n\'avez pas les droits pour supprimer ce cadeau', Response::HTTP_FORBIDDEN);
-        }
 
         try {
             $em->remove($gift);
@@ -104,14 +97,6 @@ class GiftController extends AbstractController
                                ValidatorInterface     $validator,
                                EntityManagerInterface $em): JsonResponse
     {
-        /** @var User $user */
-        $user = $this->getUser();
-        $giftlist = $user->getGiftList();
-
-        if (!$giftlist->getGifts()->contains($gift)) {
-            return new JsonResponse('Vous n\'avez pas les droits pour modifier ce cadeau', Response::HTTP_FORBIDDEN);
-        }
-
         $newGift = $serializer->deserialize($request->getContent(), Gift::class, 'json');
         $gift->setName($newGift->getName());
 
