@@ -26,7 +26,7 @@ class GiftListFixtures extends Fixture implements DependentFixtureInterface
         foreach ($users as $user) {
 
             $giftList = new GiftList();
-            $user->setGiftList($giftList);
+            $user->addGiftList($giftList);
             $giftsIndex = array_rand($gifts, 5);
 
             foreach ($giftsIndex as $index) {

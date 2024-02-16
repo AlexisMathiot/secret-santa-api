@@ -28,16 +28,19 @@ class Event
     private Collection $users;
 
     #[ORM\ManyToOne(inversedBy: 'eventsOrganize')]
-    #[ORM\JoinColumn(nullable: false)]
     private ?User $organizer = null;
 
     #[ORM\OneToMany(mappedBy: 'event', targetEntity: GiftList::class)]
     private Collection $giftList;
 
+    #[ORM\OneToMany(mappedBy: 'event', targetEntity: Santa::class)]
+    private Collection $santas;
+
     public function __construct()
     {
         $this->users = new ArrayCollection();
         $this->giftList = new ArrayCollection();
+        $this->santas = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -117,6 +120,36 @@ class Event
             // set the owning side to null (unless already changed)
             if ($giftList->getEvent() === $this) {
                 $giftList->setEvent(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Santa>
+     */
+    public function getSantas(): Collection
+    {
+        return $this->santas;
+    }
+
+    public function addSanta(Santa $santa): static
+    {
+        if (!$this->santas->contains($santa)) {
+            $this->santas->add($santa);
+            $santa->setEvent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSanta(Santa $santa): static
+    {
+        if ($this->santas->removeElement($santa)) {
+            // set the owning side to null (unless already changed)
+            if ($santa->getEvent() === $this) {
+                $santa->setEvent(null);
             }
         }
 

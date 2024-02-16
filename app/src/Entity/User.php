@@ -42,10 +42,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
-    #[Ignore]
-    #[ORM\OneToOne(targetEntity: self::class, cascade: ['persist', 'remove'])]
-    private ?self $santaOf = null;
-
     #[Groups("userList")]
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: GiftList::class, cascade: ['persist', 'remove'])]
     private Collection|null $giftList = null;
@@ -54,13 +50,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private Collection $events;
 
     #[ORM\OneToMany(mappedBy: 'organizer', targetEntity: Event::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: ['cascade'])]
     private Collection $eventsOrganize;
+
+    #[ORM\OneToMany(mappedBy: 'santa', targetEntity: Santa::class)]
+    private Collection $santas;
+
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Santa::class)]
+    private Collection $userSantas;
 
     public function __construct()
     {
         $this->giftList = new ArrayCollection();
         $this->events = new ArrayCollection();
         $this->eventsOrganize = new ArrayCollection();
+        $this->santas = new ArrayCollection();
+        $this->userSantas = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -152,18 +157,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         // $this->plainPassword = null;
     }
 
-    public function getSantaOf(): ?self
-    {
-        return $this->santaOf;
-    }
-
-    public function setSantaOf(?self $santaOf): static
-    {
-        $this->santaOf = $santaOf;
-
-        return $this;
-    }
-
     /**
      * @return Collection<int, GiftList>
      */
@@ -245,6 +238,46 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             if ($eventsOrganize->getOrganizer() === $this) {
                 $eventsOrganize->setOrganizer(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Santa>
+     */
+    public function getSantas(): Collection
+    {
+        return $this->santas;
+    }
+
+    public function addSanta(Santa $santa): static
+    {
+        if (!$this->santas->contains($santa)) {
+            $this->santas->add($santa);
+            $santa->setSanta($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSanta(Santa $santa): static
+    {
+        if ($this->santas->removeElement($santa)) {
+            // set the owning side to null (unless already changed)
+            if ($santa->getSanta() === $this) {
+                $santa->setSanta(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function addUserSanta(Santa $santa): static
+    {
+        if (!$this->userSantas->contains($santa)) {
+            $this->userSantas->add($santa);
+            $santa->setUser($this);
         }
 
         return $this;

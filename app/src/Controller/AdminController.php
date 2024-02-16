@@ -3,7 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\Event;
+use App\Entity\Santa;
 use App\Entity\User;
+use App\Repository\SantaRepository;
 use App\Repository\UserRepository;
 use App\Service\UserData;
 use Doctrine\ORM\EntityManagerInterface;
@@ -53,15 +55,24 @@ class AdminController extends AbstractController
     #[Route('/api/admin/user/{username}', name: "user_delete", methods: ['DELETE'])]
     public function deleteUser(UserRepository         $userRepository,
                                string                 $username,
-                               EntityManagerInterface $em): JsonResponse
+                               EntityManagerInterface $em,
+                               SantaRepository        $santaRepository): JsonResponse
     {
 
         $user = $userRepository->findOneBy(['username' => $username]);
+        $santas = $santaRepository->findBy(['user' => $user]);
+        $eventOrganize = $user->getEventsOrganize();
+
+        if ($eventOrganize->count() > 0) {
+            return new JsonResponse('Vous êtes organisateur d\'un évènement, merci de changer l\'organisateur');
+        }
 
         if ($user !== null) {
-            $userSanta = $userRepository->findOneBy(['santaOf' => $user]);
-            $userSanta?->setSantaOf(null);
-            $user->setSantaOf(null);
+            $em->flush();
+
+            foreach ($santas as $santa) {
+                $em->remove($santa);
+            }
             $em->flush();
             $em->remove($user);
             $em->flush();
@@ -74,7 +85,8 @@ class AdminController extends AbstractController
 
     }
 
-    #[Route('/api/admin/user/{username}', name: "user_update", methods: ['PUT'])]
+    #[
+        Route('/api/admin/user/{username}', name: "user_update", methods: ['PUT'])]
     public function updateUser(Request                     $request,
                                SerializerInterface         $serializer,
                                string                      $username,
@@ -118,15 +130,17 @@ class AdminController extends AbstractController
         $users = $event->getUsers();
 
         if ($users->count() <= 1) {
-            return new JsonResponse('Il doit y aboir au moins 2 personnes participant a l\'évènement');
+            return new JsonResponse('Il doit y avoir au moins 2 personnes participant a l\'évènement');
         }
 
-        foreach ($users as $user) {
-            $user->setSantaOf(null);
-        }
+        $this->clearSantasForEvant($event, $em);
 
         foreach ($users as $i => $user) {
-            $user->setSantaOf($users[($i + 1) % count($users)]);
+            $santa = new Santa();
+            $santa->setEvent($event);
+            $santa->setUser($user);
+            $santa->setSanta($users[($i + 1) % count($users)]);
+            $em->persist($santa);
         }
 
         $em->flush();
@@ -136,4 +150,12 @@ class AdminController extends AbstractController
 
     }
 
+    public function clearSantasForEvant(Event $event, EntityManagerInterface $em): void
+    {
+        $eventSantas = $event->getSantas();
+        foreach ($eventSantas as $santa) {
+            $em->remove($santa);
+        }
+        $em->flush();
+    }
 }

@@ -126,20 +126,4 @@ class GiftController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
-    #[Route('/api/giftslist', name: "gift_list_create", methods: ['POST'])]
-    public function createGiftList(EntityManagerInterface $em): JsonResponse
-    {
-        /** @var User $user */
-        $user = $this->getUser();
-
-        $giftlist = new GiftList();
-        $em->persist($giftlist);
-
-        $user->addGiftList($giftlist);
-
-        $em->flush();
-
-        return new JsonResponse('Liste de cadeaux crée', Response::HTTP_OK, [], true);
-
-    }
 }

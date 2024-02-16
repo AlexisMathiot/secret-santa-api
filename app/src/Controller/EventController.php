@@ -9,6 +9,7 @@ use App\Repository\GiftListRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
+use Proxies\__CG__\App\Entity\GiftList;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -201,31 +202,20 @@ class EventController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
-    #[Route('/api/events/{idEvent}/{idList}', name: 'add_gift_list_event', methods: ['GET'])]
-    public function addGiftListToEvent(EventRepository        $eventRepository,
-                                       GiftListRepository     $giftListRepository,
-                                       EntityManagerInterface $em,
-                                       int                    $idList,
-                                       int                    $idEvent
-    ): JsonResponse
+    #[Route('/api/events/creategiftlist/{id}', name: 'add_gift_list_event', methods: ['GET'])]
+    public function addGiftListToEvent(EntityManagerInterface $em, Event $event): JsonResponse
     {
-        $giftList = $giftListRepository->findOneBy(['id' => $idList]);
-        $event = $eventRepository->findOneBy(['id' => $idEvent]);
+        /** @var User $user */
+        $user = $this->getUser();
 
-        if ($giftList !== null && $event !== null) {
+        $giftList = new GiftList();
+        $em->persist($giftList);
 
-            if ($event->getGiftList()->contains($giftList)) {
-                return new JsonResponse('Vous avez déjà une liste de cadeau pour cette évènement');
-            }
+        $giftList->setUser($user);
+        $event->addGiftList($giftList);
 
-            $event->addGiftList($giftList);
-            $em->flush();
+        $em->flush();
 
-            return new JsonResponse('List ajouté');
-        }
-
-        return new JsonResponse('List ou évènement non trouvé');
-
+        return new JsonResponse('Liste créée');
     }
-
 }
