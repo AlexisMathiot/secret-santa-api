@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Entity\Event;
 use App\Entity\User;
 use App\Repository\EventRepository;
-use App\Repository\GiftListRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;

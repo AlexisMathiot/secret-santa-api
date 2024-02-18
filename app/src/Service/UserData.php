@@ -36,15 +36,16 @@ readonly class UserData
                     'event' => $event,
                     'user' => $user
                 ]);
+
                 $eventArray = [
                     'id' => $event->getId(),
                     'name' => $event->getName(),
                     'giftList' => $giftList,
-                    'santaOfId' => $eventSanta->getSanta()->getId(),
-                    'santaOf' => $eventSanta->getSanta()->getUsername(),
+                    'santaOfId' => $eventSanta?->getSanta()->getId(),
+                    'santaOf' => $eventSanta?->getSanta()->getUsername(),
                     'santaOfGiftList' => $this->giftListRepository->findOneBy([
                         'event' => $event,
-                        'user' => $eventSanta->getSanta()
+                        'user' => $eventSanta?->getSanta()
                     ])
                 ];
 
