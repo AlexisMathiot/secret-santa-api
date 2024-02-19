@@ -25,7 +25,7 @@ class Gift
     private ?string $name = null;
 
     #[ORM\ManyToOne(inversedBy: 'gifts')]
-    #[ORM\JoinColumn(name: "gift_list_id", referencedColumnName: "id", onDelete: "CASCADE")]
+    #[ORM\JoinColumn(name: "gift_list_id", referencedColumnName: "id", onDelete: "cascade")]
     private ?GiftList $giftList = null;
 
     public function getId(): ?int

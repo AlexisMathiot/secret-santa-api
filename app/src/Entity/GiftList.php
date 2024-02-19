@@ -26,8 +26,8 @@ class GiftList
     private Collection $gifts;
 
     #[ManyToOne(targetEntity: User::class, inversedBy: 'giftList')]
-    #[JoinColumn(name: 'user_id', referencedColumnName: 'id')]
-    private User|null $user = null;
+    #[ORM\JoinColumn(onDelete: 'cascade')]
+    private ?User $user = null;
 
     #[ORM\ManyToOne(inversedBy: 'giftList')]
     #[ORM\JoinColumn(onDelete: 'cascade')]

@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Entity\GiftList;
 use App\Entity\User;
 use App\Repository\GiftListRepository;
 use App\Repository\SantaRepository;
@@ -25,13 +26,9 @@ readonly class UserData
             'email' => $user->getEmail(),
             'roles' => $user->getRoles(),
         ];
-
         if ($userEvents->count() > 0) {
             foreach ($userEvents as $k => $event) {
-                $giftList = $this->giftListRepository->findOneBy([
-                    'event' => $event,
-                    'user' => $user
-                ]);
+                $giftList = $this->giftListRepository->findOneBy(['event' => $event, 'user' => $user]) ?? new GiftList();
                 $eventSanta = $this->santaRepository->findOneBy([
                     'event' => $event,
                     'user' => $user

@@ -3,12 +3,13 @@
 namespace App\Controller;
 
 use App\Entity\Event;
+use App\Entity\GiftList;
 use App\Entity\User;
 use App\Repository\EventRepository;
+use App\Repository\GiftListRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
-use Proxies\__CG__\App\Entity\GiftList;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -107,8 +108,8 @@ class EventController extends AbstractController
                                  int                    $eventId,
                                  UserRepository         $userRepository,
                                  EventRepository        $eventRepository,
-                                 EntityManagerInterface $em
-    ): JsonResponse
+                                 EntityManagerInterface $em,
+                                 GiftListRepository     $giftListRepository): JsonResponse
     {
 
         $user = $userRepository->findOneBy(['id' => $userId]);
@@ -117,7 +118,10 @@ class EventController extends AbstractController
         $this->denyAccessUnlessGranted('edit', $event);
 
         if ($user !== null && $event !== null) {
+            $giftList = $giftListRepository->findOneBy(['user' => $user, 'event' => $event]) ?? new GiftList();
             $event->addUser($user);
+            $event->addGiftList($giftList);
+            $user->addGiftList($giftList);
             $em->flush();
             $userName = $user->getUsername();
             $eventName = $event->getName();
@@ -169,7 +173,7 @@ class EventController extends AbstractController
     ): JsonResponse
     {
         $user = $userRepository->findOneBy(['id' => $userId]);
-        $event = $eventRepository->findOneBy((['id' => $eventId]));
+        $event = $eventRepository->findOneBy(['id' => $eventId]);
 
         $this->denyAccessUnlessGranted('edit', $event);
 
@@ -201,20 +205,4 @@ class EventController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
-    #[Route('/api/events/creategiftlist/{id}', name: 'add_gift_list_event', methods: ['GET'])]
-    public function addGiftListToEvent(EntityManagerInterface $em, Event $event): JsonResponse
-    {
-        /** @var User $user */
-        $user = $this->getUser();
-
-        $giftList = new GiftList();
-        $em->persist($giftList);
-
-        $giftList->setUser($user);
-        $event->addGiftList($giftList);
-
-        $em->flush();
-
-        return new JsonResponse('Liste créée');
-    }
 }
