@@ -2,7 +2,9 @@
 
 namespace App\Repository;
 
+use App\Entity\Event;
 use App\Entity\Santa;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -19,6 +21,23 @@ class SantaRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Santa::class);
+    }
+
+    public function findByEventSantaandUser(Event $event, User $user)
+    {
+        $qb = $this->createQueryBuilder('s')
+            ->where('s.event = :event')
+            ->orWhere('s.user = :user')
+            ->orWhere('s.santa = :user')
+            ->setParameter('event', $event)
+            ->setParameter('user', $user)
+            ->orWhere();
+
+
+        $query = $qb->getQuery();
+
+        return $query->execute();
+
     }
 
 //    /**

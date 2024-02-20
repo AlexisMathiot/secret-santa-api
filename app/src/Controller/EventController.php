@@ -7,6 +7,7 @@ use App\Entity\GiftList;
 use App\Entity\User;
 use App\Repository\EventRepository;
 use App\Repository\GiftListRepository;
+use App\Repository\SantaRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
@@ -139,8 +140,8 @@ class EventController extends AbstractController
                                     int                    $eventId,
                                     UserRepository         $userRepository,
                                     EventRepository        $eventRepository,
-                                    EntityManagerInterface $em
-    ): JsonResponse
+                                    SantaRepository        $santaRepository,
+                                    EntityManagerInterface $em): JsonResponse
     {
         $user = $userRepository->findOneBy(['id' => $userId]);
         $event = $eventRepository->findOneBy(['id' => $eventId]);
@@ -148,6 +149,14 @@ class EventController extends AbstractController
         $this->denyAccessUnlessGranted('edit', $event);
 
         if ($user !== null && $event !== null) {
+            $santas = $santaRepository->findByEventSantaandUser($event, $user);
+            if (count($santas) > 0) {
+                foreach ($santas as $santa) {
+                    $em->remove($santa);
+                }
+                $em->flush();
+            }
+
             if ($event->getUsers()->contains($user)) {
                 $event->removeUser($user);
                 $em->flush();
@@ -164,7 +173,8 @@ class EventController extends AbstractController
 
     }
 
-    #[Route('api/events/organizer/{userId}/{eventId}', name: 'set_organizer', methods: ['GET'])]
+    #[
+        Route('api/events/organizer/{userId}/{eventId}', name: 'set_organizer', methods: ['GET'])]
     public function setOrganizer(int                    $userId,
                                  int                    $eventId,
                                  UserRepository         $userRepository,
