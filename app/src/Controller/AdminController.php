@@ -85,8 +85,7 @@ class AdminController extends AbstractController
 
     }
 
-    #[
-        Route('/api/admin/user/{username}', name: "user_update", methods: ['PUT'])]
+    #[Route('/api/admin/user/{username}', name: "user_update", methods: ['PUT'])]
     public function updateUser(Request                     $request,
                                SerializerInterface         $serializer,
                                string                      $username,

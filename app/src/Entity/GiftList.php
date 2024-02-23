@@ -29,7 +29,7 @@ class GiftList
     #[ORM\JoinColumn(onDelete: 'cascade')]
     private ?User $user = null;
 
-    #[ORM\ManyToOne(inversedBy: 'giftList')]
+    #[ORM\ManyToOne(targetEntity: Event::class, inversedBy: 'giftList')]
     #[ORM\JoinColumn(onDelete: 'cascade')]
     private ?Event $event = null;
 
