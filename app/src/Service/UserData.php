@@ -50,6 +50,16 @@ readonly class UserData
             }
         }
 
+        if ($user->getEventsOrganize()->count() > 0) {
+            $userArray['isOrganizerOfEvent'] = true;
+            foreach ($user->getEventsOrganize() as $eventOrganize) {
+                $eventOrganizeIds[] = $eventOrganize->getId();
+            }
+            $userArray['organizedEventIds'] = $eventOrganizeIds;
+        } else {
+            $userArray['isOrganizerOfEvent'] = false;
+        }
+
         return $userArray;
     }
 }
