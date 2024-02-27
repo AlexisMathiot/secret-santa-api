@@ -9,7 +9,6 @@ use App\Repository\SantaRepository;
 use App\Repository\UserRepository;
 use App\Service\UserData;
 use Doctrine\ORM\EntityManagerInterface;
-use phpDocumentor\Reflection\Types\Collection;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -33,33 +32,21 @@ class AdminController extends AbstractController
         return new JsonResponse($jsonUserlist, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/api/admin/user/{username}', name: "user_detail", methods: ['GET'])]
-    public function userDetail(UserRepository      $userRepository,
-                               SerializerInterface $serializer,
-                               string              $username,
-                               UserData            $userData
-    ): JsonResponse
+    #[Route('/api/admin/user/{id}', name: "user_detail", methods: ['GET'])]
+    public function userDetail(SerializerInterface $serializer,
+                               User                $user,
+                               UserData            $userData): JsonResponse
     {
-        $user = $userRepository->findOneBy(['username' => $username]);
-        if ($user !== null) {
-            $userArray = $userData->userDataToArray($user);
-            $jsonUser = $serializer->serialize($userArray, 'json', ['groups' => 'userDetail']);
-            return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
-        }
-
-        $message = "Utilisateur avec le username {$username} n'existe pas";
-        return new JsonResponse($message, Response::HTTP_NOT_FOUND, [], true);
-
+        $userArray = $userData->userDataToArray($user);
+        $jsonUser = $serializer->serialize($userArray, 'json', ['groups' => 'userDetail']);
+        return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
     }
 
-    #[Route('/api/admin/user/{username}', name: "user_delete", methods: ['DELETE'])]
-    public function deleteUser(UserRepository         $userRepository,
-                               string                 $username,
+    #[Route('/api/admin/user/{id}', name: "user_delete", methods: ['DELETE'])]
+    public function deleteUser(User                   $user,
                                EntityManagerInterface $em,
                                SantaRepository        $santaRepository): JsonResponse
     {
-
-        $user = $userRepository->findOneBy(['username' => $username]);
         $santas = $santaRepository->findBy(['user' => $user]);
         $eventOrganize = $user->getEventsOrganize();
 
@@ -67,60 +54,46 @@ class AdminController extends AbstractController
             return new JsonResponse('Vous êtes organisateur d\'un évènement, merci de changer l\'organisateur');
         }
 
-        if ($user !== null) {
-            $em->flush();
-
-            foreach ($santas as $santa) {
-                $em->remove($santa);
-            }
-            $em->flush();
-            $em->remove($user);
-            $em->flush();
-
-            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        foreach ($santas as $santa) {
+            $em->remove($santa);
         }
+        $em->flush();
+        $em->remove($user);
+        $em->flush();
 
-        $message = "User with username {$username} not found";
-        return new JsonResponse($message, Response::HTTP_NOT_FOUND);
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
 
     }
 
-    #[Route('/api/admin/user/{username}', name: "user_update", methods: ['PUT'])]
+    #[Route('/api/admin/user/{id}', name: "user_update", methods: ['PUT'])]
     public function updateUser(Request                     $request,
                                SerializerInterface         $serializer,
-                               string                      $username,
+                               User                        $currentUser,
                                EntityManagerInterface      $em,
                                UserRepository              $userRepository,
                                ValidatorInterface          $validator,
                                UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
-        $currentUser = $userRepository->findOneBy(['username' => $username]);
+        $updateUser = $serializer->deserialize($request->getContent(),
+            User::class,
+            'json',
+            [AbstractNormalizer::OBJECT_TO_POPULATE => $currentUser]
+        );
 
-        if ($currentUser !== null) {
-            $updateUser = $serializer->deserialize($request->getContent(),
-                User::class,
-                'json',
-                [AbstractNormalizer::OBJECT_TO_POPULATE => $currentUser]
-            );
-
-            $errors = $validator->validate($updateUser);
-            if ($errors->count() > 0) {
-                return new JsonResponse($serializer->serialize($errors, 'json'),
-                    Response::HTTP_BAD_REQUEST, [], true);
-            }
-
-            $sendPassword = $serializer->deserialize($request->getContent(), User::class, 'json')->getPassword();
-            if ($sendPassword !== null) {
-                $updateUser->setPassword($passwordHasher->hashPassword($updateUser, $sendPassword));
-            }
-
-            $em->persist($updateUser);
-            $em->flush();
-            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        $errors = $validator->validate($updateUser);
+        if ($errors->count() > 0) {
+            return new JsonResponse($serializer->serialize($errors, 'json'),
+                Response::HTTP_BAD_REQUEST, [], true);
         }
 
-        $message = "User with username {$username} not found";
-        return new JsonResponse($message, Response::HTTP_NOT_FOUND);
+        $sendPassword = $serializer->deserialize($request->getContent(), User::class, 'json')->getPassword();
+        if ($sendPassword !== null) {
+            $updateUser->setPassword($passwordHasher->hashPassword($updateUser, $sendPassword));
+        }
+
+        $em->persist($updateUser);
+        $em->flush();
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
     #[Route('/api/admin/users/setsanta/{id}', name: "user_set_santa", methods: ['GET'])]
