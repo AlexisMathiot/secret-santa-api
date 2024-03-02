@@ -50,7 +50,6 @@ class EventController extends AbstractController
                              ValidatorInterface     $validator
     ): JsonResponse
     {
-
         /** @var User $user */
         $user = $this->getUser();
 
@@ -173,8 +172,7 @@ class EventController extends AbstractController
 
     }
 
-    #[
-        Route('api/events/organizer/{userId}/{eventId}', name: 'set_organizer', methods: ['GET'])]
+    #[Route('api/events/organizer/{userId}/{eventId}', name: 'set_organizer', methods: ['GET'])]
     public function setOrganizer(int                    $userId,
                                  int                    $eventId,
                                  UserRepository         $userRepository,
