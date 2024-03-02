@@ -51,7 +51,9 @@ class AdminController extends AbstractController
         $eventOrganize = $user->getEventsOrganize();
 
         if ($eventOrganize->count() > 0) {
-            return new JsonResponse('Vous êtes organisateur d\'un évènement, merci de changer l\'organisateur');
+            $jsonResponse = new JsonResponse();
+            $jsonResponse->setContent('Vous êtes organisateur d\'un évènement, merci de changer l\'organisateur');
+            return $jsonResponse;
         }
 
         foreach ($santas as $santa) {
@@ -70,7 +72,6 @@ class AdminController extends AbstractController
                                SerializerInterface         $serializer,
                                User                        $currentUser,
                                EntityManagerInterface      $em,
-                               UserRepository              $userRepository,
                                ValidatorInterface          $validator,
                                UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
