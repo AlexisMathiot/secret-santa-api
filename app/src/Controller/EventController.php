@@ -50,7 +50,6 @@ class EventController extends AbstractController
                              ValidatorInterface     $validator
     ): JsonResponse
     {
-
         /** @var User $user */
         $user = $this->getUser();
 

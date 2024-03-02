@@ -17,6 +17,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    #[Groups(['eventDetail', 'userList'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
