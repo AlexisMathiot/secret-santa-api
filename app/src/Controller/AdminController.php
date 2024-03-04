@@ -96,38 +96,4 @@ class AdminController extends AbstractController
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 
-    #[Route('/api/admin/users/setsanta/{id}', name: "user_set_santa", methods: ['GET'])]
-    public function setSanta(EntityManagerInterface $em, Event $event): JsonResponse
-    {
-        $users = $event->getUsers();
-
-        if ($users->count() <= 1) {
-            return new JsonResponse('Il doit y avoir au moins 2 personnes participant a l\'évènement');
-        }
-
-        $this->clearSantasForEvant($event, $em);
-
-        foreach ($users as $i => $user) {
-            $santa = new Santa();
-            $santa->setEvent($event);
-            $santa->setUser($user);
-            $santa->setSanta($users[($i + 1) % count($users)]);
-            $em->persist($santa);
-        }
-
-        $em->flush();
-        $message = 'Pères Noel attribués';
-
-        return new JsonResponse($message, Response::HTTP_OK, [], true);
-
-    }
-
-    public function clearSantasForEvant(Event $event, EntityManagerInterface $em): void
-    {
-        $eventSantas = $event->getSantas();
-        foreach ($eventSantas as $santa) {
-            $em->remove($santa);
-        }
-        $em->flush();
-    }
 }
