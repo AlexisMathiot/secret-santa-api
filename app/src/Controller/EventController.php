@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -25,7 +26,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class EventController extends AbstractController
 {
 
-    #[Route('/api/events/{id}', name: "event_detail", methods: ['GET'])]
+    #[Route('/api/events/{id}', name: "event_detail", requirements: ['id' => Requirement::DIGITS], methods: ['GET'])]
     public function detailEvent(Event $event, SerializerInterface $serializer): JsonResponse
     {
         $jsonEvent = $serializer->serialize($event, 'json', ['groups' => 'eventDetail']);
@@ -59,7 +60,11 @@ class EventController extends AbstractController
         $errors = $validator->validate($event);
 
         if ($errors->count() > 0) {
-            return new JsonResponse($serializer->serialize($errors, 'json'), Response::HTTP_BAD_REQUEST);
+            $messages = [];
+            foreach ($errors as $violation) {
+                $messages[$violation->getPropertyPath()][] = $violation->getMessage();
+            }
+            return new JsonResponse($messages, Response::HTTP_BAD_REQUEST);
         }
 
         $em->persist($event);
@@ -251,5 +256,4 @@ class EventController extends AbstractController
         }
         $em->flush();
     }
-
 }
