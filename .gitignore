@@ -25,3 +25,4 @@ app/config/jwt
 ###> lexik/jwt-authentication-bundle ###
 /config/jwt/*.pem
 ###< lexik/jwt-authentication-bundle ###
+/packages/nelmio_cors.yaml

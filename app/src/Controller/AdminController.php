@@ -2,8 +2,6 @@
 
 namespace App\Controller;
 
-use App\Entity\Event;
-use App\Entity\Santa;
 use App\Entity\User;
 use App\Repository\SantaRepository;
 use App\Repository\UserRepository;
@@ -95,5 +93,4 @@ class AdminController extends AbstractController
         $em->flush();
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
-
 }
