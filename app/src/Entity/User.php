@@ -54,6 +54,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\JoinColumn(nullable: true, onDelete: ['cascade'])]
     private Collection $eventsOrganize;
 
+    #[ORM\Column(nullable: true)]
+    private ?string $resetToken = null;
+
+    public function getResetToken(): ?string
+    {
+        return $this->resetToken;
+    }
+
+    public function setResetToken(?string $resetToken): static
+    {
+        $this->resetToken = $resetToken;
+        return $this;
+    }
+
     #[ORM\OneToMany(mappedBy: 'santa', targetEntity: Santa::class)]
     private Collection $santas;
 
