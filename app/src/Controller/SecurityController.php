@@ -2,7 +2,6 @@
 
 namespace App\Controller;
 
-use App\Entity\User;
 use App\Form\ResetPasswordType;
 use App\Repository\UserRepository;
 use App\Service\MailerService;
@@ -16,7 +15,6 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
-use Symfony\Component\Serializer\SerializerInterface;
 
 class SecurityController extends AbstractController
 {
@@ -58,7 +56,6 @@ class SecurityController extends AbstractController
 
         return new JsonResponse('Un problème est survenu', Response::HTTP_BAD_REQUEST, [], true);
     }
-
 
     #[Route(path: '/forgot-password/{token}', name: 'reset_password')]
     public function resetPassword(
