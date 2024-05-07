@@ -2,10 +2,11 @@
 
 namespace App\Controller;
 
-use App\Form\ResetPasswordType;
 use App\Repository\UserRepository;
 use App\Service\MailerService;
+use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,15 +14,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class SecurityController extends AbstractController
 {
     /**
      * @throws TransportExceptionInterface
+     * @throws Exception
      */
-    #[Route(path: '/forgot-password', name: 'forgot_password')]
+    #[Route(path: '/forgot-password', name: 'forgot_password', methods: 'POST')]
     public function forgotPassword(
         Request                 $request,
         UserRepository          $userRepository,
@@ -36,10 +38,13 @@ class SecurityController extends AbstractController
         if ($user !== null) {
             $token = $tokenGenerator->generateToken();
             $user->setResetToken($token);
+            $user->setTimeSendResetPasswordLink(new \DateTime('now', new DateTimeZone('Europe/Paris')));
             $entityManager->persist($user);
             $entityManager->flush();
 
-            $url = $this->generateUrl('reset_password', ['token' => $token], UrlGeneratorInterface::ABSOLUTE_URL);
+            $baseUrl = $this->getParameter('app.front_base_url');
+
+            $url = $baseUrl . '/reset-password/' . $token;
 
             $context = compact('url', 'user');
 
@@ -57,41 +62,58 @@ class SecurityController extends AbstractController
         return new JsonResponse('Un problème est survenu', Response::HTTP_BAD_REQUEST, [], true);
     }
 
-    #[Route(path: '/forgot-password/{token}', name: 'reset_password')]
+    /**
+     * @throws Exception
+     */
+    #[Route(path: '/reset-password', name: 'reset_password', methods: 'POST')]
     public function resetPassword(
-        string                      $token,
-        Request                     $request,
-        UserRepository              $userRepository,
-        EntityManagerInterface      $entityManager,
-        UserPasswordHasherInterface $userPasswordHasher,
+        UserRepository      $userRepository,
+        Request             $request,
+        SerializerInterface $serializer
     ): Response
     {
+        $token = json_decode($request->getContent(), true)['token'];
         $user = $userRepository->findOneBy(['resetToken' => $token]);
         if ($user !== null) {
-            $form = $this->createForm(ResetPasswordType::class);
-            $form->handleRequest($request);
-
-            if ($form->isSubmitted() && $form->isValid()) {
-                $user->setResetToken('');
-                $user->setPassword(
-                    $userPasswordHasher->hashPassword(
-                        $user,
-                        $form->get('password')->getData()
-                    )
-                );
-                $entityManager->persist($user);
-                $entityManager->flush();
-
-                $this->addFlash('success', 'Mot de passe changé avec succès');
-                $this->redirectToRoute('app_login');
+            $now = new \DateTime('now', new DateTimeZone('Europe/Paris'));
+            $_date = new \DateTime($user->getTimeSendResetPasswordLink()->format('Y-m-d H:i:s'), new \DateTimeZone('Europe/Paris'));
+            $numberMinutesSinceMailSend = $now->diff($_date)->i;
+            if ($numberMinutesSinceMailSend > 120) {
+                return new JsonResponse('Durée de validité du lien dépassé merci de refaire une demande de modification de mot de passe', Response::HTTP_OK, [], true);
             }
+            $jsonUser = $serializer->serialize($user, 'json', ['groups' => 'userResetPassword']);
+            return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
+        }
+        return new JsonResponse('Utilisateur non trouvé', Response::HTTP_NOT_FOUND, [], true);
+    }
 
-            return $this->render('security/reset_password.html.twig', [
-                'passForm' => $form->createView()
-            ]);
+    #[Route(path: '/reset-password-set', name: 'reset_password_set', methods: 'POST')]
+    public function setResetPassword(
+        UserRepository              $userRepository,
+        Request                     $request,
+        UserPasswordHasherInterface $passwordHasher,
+        EntityManagerInterface      $entityManager
+    ): JsonResponse
+    {
+        $token = json_decode($request->getContent(), true)['token'];
+        $password = json_decode($request->getContent(), true)['password'];
+        $user = $userRepository->findOneBy(['resetToken' => $token]);
+
+        if ($user !== null) {
+            $user->setResetToken('');
+            $user->setTimeSendResetPasswordLink(null);
+            $user->setPassword(
+                $passwordHasher->hashPassword(
+                    $user,
+                    $password
+                )
+            );
+            $entityManager->persist($user);
+            $entityManager->flush();
+
+            return new JsonResponse('Mot de passe changé', Response::HTTP_OK, [], true);
         }
 
-        $this->addFlash('danger', 'Jeton invalide');
-        return $this->redirectToRoute('app_home');
+        return new JsonResponse('Utilisateur non trouvé', Response::HTTP_NOT_FOUND, [], true);
     }
 }

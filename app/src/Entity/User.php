@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -37,7 +38,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private array $roles = [];
 
     /**
-     * @var string The hashed password
+     * @var null|string The hashed password
      */
     #[Groups("userList")]
     #[ORM\Column]
@@ -54,25 +55,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\JoinColumn(nullable: true, onDelete: ['cascade'])]
     private Collection $eventsOrganize;
 
+    #[Groups("userResetPassword")]
     #[ORM\Column(nullable: true)]
     private ?string $resetToken = null;
-
-    public function getResetToken(): ?string
-    {
-        return $this->resetToken;
-    }
-
-    public function setResetToken(?string $resetToken): static
-    {
-        $this->resetToken = $resetToken;
-        return $this;
-    }
 
     #[ORM\OneToMany(mappedBy: 'santa', targetEntity: Santa::class)]
     private Collection $santas;
 
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Santa::class)]
     private Collection $userSantas;
+
+    /**
+     * @var null|DateTime
+     */
+    #[Groups("userResetPassword")]
+    #[Assert\DateTime]
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    protected ?DateTime $timeSendResetPasswordLink = null;
+
 
     public function __construct()
     {
@@ -258,6 +258,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getResetToken(): ?string
+    {
+        return $this->resetToken;
+    }
+
+    public function setResetToken(?string $resetToken): static
+    {
+        $this->resetToken = $resetToken;
+        return $this;
+    }
+
     /**
      * @return Collection<int, Santa>
      */
@@ -298,4 +309,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getTimeSendResetPasswordLink(): ?DateTime
+    {
+        return $this->timeSendResetPasswordLink;
+    }
+
+    public function setTimeSendResetPasswordLink(?DateTime $timeSendResetPasswordLink): void
+    {
+        $this->timeSendResetPasswordLink = $timeSendResetPasswordLink;
+    }
 }
