@@ -15,7 +15,6 @@ class UserController extends AbstractController
     #[Route('/api/user', name: 'api_user_detail', methods: 'GET')]
     public function currentUserDetail(SerializerInterface $serializer, UserData $userData): Response
     {
-
         /** @var User $user */
         $user = $this->getUser();
         $userArray = $userData->userDataToArray($user);

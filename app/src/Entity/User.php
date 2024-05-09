@@ -24,12 +24,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $id = null;
 
-    #[Groups(["userList", "eventDetail"])]
+    #[Groups(["userList", "eventDetail", "usersInvitToEvent"])]
     #[ORM\Column(length: 180, unique: true)]
     #[Assert\NotBlank(message: "Le nom d'utilisateur est obligatoire")]
     private ?string $username = null;
 
-    #[Groups(["userList", "eventDetail"])]
+    #[Groups(["userList", "eventDetail", "usersInvitToEvent"])]
     #[ORM\Column(length: 180, unique: true, nullable: true)]
     private ?string $email = null;
 

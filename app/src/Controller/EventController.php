@@ -256,4 +256,12 @@ class EventController extends AbstractController
         }
         $em->flush();
     }
+
+    #[Route('api/events/usersToInvit', name: 'event_users_to_invit', methods: ['GET'])]
+    public function listUsersInvitToEvent(UserRepository $userRepository, SerializerInterface    $serializer): JsonResponse {
+        $users = $userRepository->findAll();
+        $usersJson = $serializer->serialize($users, 'json', ['groups' => 'usersInvitToEvent']);
+
+        return new JsonResponse($usersJson, Response::HTTP_OK, [], true);
+    }
 }
