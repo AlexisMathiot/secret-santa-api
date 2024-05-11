@@ -264,4 +264,6 @@ class EventController extends AbstractController
 
         return new JsonResponse($usersJson, Response::HTTP_OK, [], true);
     }
+
+
 }

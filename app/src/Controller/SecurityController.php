@@ -79,7 +79,11 @@ class SecurityController extends AbstractController
             $_date = new \DateTime($user->getTimeSendResetPasswordLink()->format('Y-m-d H:i:s'), new \DateTimeZone('Europe/Paris'));
             $numberMinutesSinceMailSend = $now->diff($_date)->i;
             if ($numberMinutesSinceMailSend > 120) {
-                return new JsonResponse('Durée de validité du lien dépassé merci de refaire une demande de modification de mot de passe', Response::HTTP_OK, [], true);
+                return new JsonResponse(
+                    'Durée de validité du lien dépassé merci de refaire une demande de modification de mot de passe',
+                    Response::HTTP_OK, [],
+                    true
+                );
             }
             $jsonUser = $serializer->serialize($user, 'json', ['groups' => 'userResetPassword']);
             return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
