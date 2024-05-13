@@ -16,7 +16,7 @@ class Event
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    #[Groups("userDetail")]
+    #[Groups(["userDetail", "invitation"])]
     private ?int $id = null;
 
     #[Assert\NotBlank(message: "Le nom de l'évènement est obligatoire")]
@@ -36,11 +36,15 @@ class Event
     #[ORM\OneToMany(mappedBy: 'event', targetEntity: Santa::class)]
     private Collection $santas;
 
+    #[ORM\OneToMany(mappedBy: 'event', targetEntity: Invitation::class)]
+    private Collection $invitations;
+
     public function __construct()
     {
         $this->users = new ArrayCollection();
         $this->giftList = new ArrayCollection();
         $this->santas = new ArrayCollection();
+        $this->invitations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -150,6 +154,36 @@ class Event
             // set the owning side to null (unless already changed)
             if ($santa->getEvent() === $this) {
                 $santa->setEvent(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Invitation>
+     */
+    public function getInvitations(): Collection
+    {
+        return $this->invitations;
+    }
+
+    public function addInvitation(Invitation $invitation): static
+    {
+        if (!$this->invitations->contains($invitation)) {
+            $this->invitations->add($invitation);
+            $invitation->setEvent($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInvitation(Invitation $invitation): static
+    {
+        if ($this->invitations->removeElement($invitation)) {
+            // set the owning side to null (unless already changed)
+            if ($invitation->getEvent() === $this) {
+                $invitation->setEvent(null);
             }
         }
 

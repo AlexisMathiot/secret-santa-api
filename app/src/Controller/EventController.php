@@ -4,21 +4,27 @@ namespace App\Controller;
 
 use App\Entity\Event;
 use App\Entity\GiftList;
+use App\Entity\Invitation;
 use App\Entity\Santa;
 use App\Entity\User;
 use App\Repository\EventRepository;
 use App\Repository\GiftListRepository;
+use App\Repository\InvitationRepository;
 use App\Repository\SantaRepository;
 use App\Repository\UserRepository;
+use App\Service\MailerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
+use JetBrains\PhpStorm\NoReturn;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\Requirement\Requirement;
+use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -124,20 +130,26 @@ class EventController extends AbstractController
         $this->denyAccessUnlessGranted('edit', $event);
 
         if ($user !== null && $event !== null) {
-            $giftList = $giftListRepository->findOneBy(['user' => $user, 'event' => $event]) ?? new GiftList();
-            $event->addUser($user);
-            $event->addGiftList($giftList);
-            $user->addGiftList($giftList);
-            $em->flush();
-            $userName = $user->getUsername();
-            $eventName = $event->getName();
-            $message = "L'utilisateur {$userName} a été ajouté a l'évènement {$eventName}";
+
+            $message = $this->addUSerToEvent($user, $event, $giftListRepository, $em);
 
             return new JsonResponse($message, Response::HTTP_OK, [], true);
         }
 
         return new JsonResponse('Utilisateur ou évènement non trouvé', Response::HTTP_BAD_REQUEST, [], true);
 
+    }
+
+    public function addUSerToEvent(User $user, Event $event, GiftListRepository $giftListRepository, EntityManagerInterface $em): string
+    {
+        $giftList = $giftListRepository->findOneBy(['user' => $user, 'event' => $event]) ?? new GiftList();
+        $event->addUser($user);
+        $event->addGiftList($giftList);
+        $user->addGiftList($giftList);
+        $em->flush();
+        $userName = $user->getUsername();
+        $eventName = $event->getName();
+        return "L'utilisateur {$userName} a été ajouté a l'évènement {$eventName}";
     }
 
     #[Route('api/events/remove/{userId}/{eventId}', name: 'remove_event_user', methods: ['GET'])]
@@ -207,7 +219,6 @@ class EventController extends AbstractController
     #[Route('/api/events/{id}', name: 'event_delete', methods: ['DELETE'])]
     public function deleteEvent(Event $event, EntityManagerInterface $em): JsonResponse
     {
-
         $this->denyAccessUnlessGranted('delete', $event);
 
         try {
@@ -258,12 +269,112 @@ class EventController extends AbstractController
     }
 
     #[Route('api/events/usersToInvit', name: 'event_users_to_invit', methods: ['GET'])]
-    public function listUsersInvitToEvent(UserRepository $userRepository, SerializerInterface    $serializer): JsonResponse {
+    public function listUsersInvitToEvent(UserRepository $userRepository, SerializerInterface $serializer): JsonResponse
+    {
         $users = $userRepository->findAll();
         $usersJson = $serializer->serialize($users, 'json', ['groups' => 'usersInvitToEvent']);
 
         return new JsonResponse($usersJson, Response::HTTP_OK, [], true);
     }
 
+    /**
+     * @throws TransportExceptionInterface
+     */
+    #[Route('api/events/invit/{fromUserId}/{toUserId}/{eventId}', name: 'event_mail_to_invit', methods: ['GET'])]
+    public function sendMailInvit(
+        int                     $fromUserId,
+        string                  $toUserId,
+        int                     $eventId,
+        InvitationRepository    $invitationRepository,
+        UserRepository          $userRepository,
+        EventRepository         $eventRepository,
+        EntityManagerInterface  $entityManager,
+        MailerService           $mail,
+        TokenGeneratorInterface $tokenGenerator
+    ): JsonResponse
+    {
+        $sendUser = $userRepository->findOneBy(['id' => $fromUserId]);
+        $receiverUser = $userRepository->findOneBy(['id' => $toUserId]);
+        $event = $eventRepository->findOneBy(['id' => $eventId]);
 
+        if ($sendUser !== null && $receiverUser !== null && $event !== null) {
+            if ($event->getUsers()->contains($receiverUser)) {
+                return new JsonResponse("L'utilisateur {$receiverUser->getUsername()} est déjà inscrit à l'évènement {$event->getName()}");
+            }
+
+            $invitation = $invitationRepository->findOneBy(['userToInvit' => $receiverUser, 'userSentInvit' => $sendUser, 'event' => $event]);
+            if ($invitation !== null && $invitation->getDate()->diff(new \DateTime(), true)->days < 7) {
+                return new JsonResponse(
+                    "Une invitation pour l'utilisateur {$receiverUser->getUsername()} à l'évènement {$event->getName()} éxiste déja");
+            }
+
+            $invitation = new Invitation();
+            $invitation->setEvent($event);
+            $invitation->setUserSentInvit($sendUser);
+            $invitation->setUserToInvit($receiverUser);
+            $invitation->setDate(new \DateTime());
+            $invitation->setToken($tokenGenerator->generateToken());
+            $entityManager->persist($invitation);
+            $entityManager->flush();
+            $baseUrl = $this->getParameter('app.front_base_url');
+            $url = $baseUrl . '/invit/' . $invitation->getToken();
+            $context = compact('url', 'sendUser', 'receiverUser', 'event', 'invitation');
+            $mail->send(
+                'no-reply@domain.fr',
+                $receiverUser->getEmail(),
+                'Invitation a l\'évènement' . $event->getName(),
+                'invit_to_event',
+                $context
+            );
+            return new JsonResponse("Invitation envoyé", Response::HTTP_OK, [], true);
+        }
+        return new JsonResponse("Utilisateur ou évènement non trouvé", Response::HTTP_BAD_REQUEST, [], true);
+    }
+
+    #[Route('events/invit/{token}', name: 'event_invit', methods: ['GET'])]
+    public function processInvit(
+        string                 $token,
+        InvitationRepository   $invitationRepository,
+        GiftListRepository     $giftListRepository,
+        EntityManagerInterface $em): JsonResponse
+    {
+        $invitation = $invitationRepository->findOneBy(['token' => $token]);
+        if ($invitation !== null) {
+            if ($invitation->getDate()->diff(new \DateTime(), true)->days > 7) {
+                return new JsonResponse("La date de validation du lien est dépassée merci de renvoyer une invitation",
+                    Response::HTTP_OK, [],
+                    true);
+            }
+            $userToInvit = $invitation->getUserToInvit();
+            $event = $invitation->getEvent();
+            $message = $this->addUSerToEvent($userToInvit, $event, $giftListRepository, $em);
+            $em->remove($invitation);
+            $em->flush();
+            return new JsonResponse($message, Response::HTTP_OK, [], true);
+        }
+
+        return new JsonResponse('Invitation non trouvée', Response::HTTP_NOT_FOUND, [], true);
+    }
+
+    #[Route('/invitations/{token}')]
+    public function getInvitation(
+        string               $token,
+        InvitationRepository $invitationRepository,
+        SerializerInterface  $serializer
+    ): JsonResponse
+    {
+        $invitation = $invitationRepository->findOneBy(['token' => $token]);
+        if ($invitation !== null) {
+            $invitationToArray = ['id' => $invitation->getId(),
+                'userToInvit' => $invitation->getUserToInvit()->getId(),
+                'userSentInvit' => $invitation->getUserSentInvit()->getId(),
+                'date' => $invitation->getDate(),
+                'event' => $invitation->getEvent()->getId(),
+                'token' => $invitation->getToken()
+            ];
+            $jsonInvitation = $serializer->serialize($invitationToArray, 'json', ['groups' => 'invitation']);
+            return new JsonResponse($jsonInvitation, Response::HTTP_OK, [], true);
+        }
+        return new JsonResponse('Invitation non trouvée', Response::HTTP_NOT_FOUND, [], true);
+    }
 }

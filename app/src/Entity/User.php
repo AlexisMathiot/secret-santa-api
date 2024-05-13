@@ -18,7 +18,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    #[Groups(['eventDetail', 'userList', 'usersInvitToEvent'])]
+    #[Groups(['eventDetail', 'userList', 'usersInvitToEvent', 'invitation'])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -73,6 +73,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'datetime', nullable: true)]
     protected ?DateTime $timeSendResetPasswordLink = null;
 
+    #[ORM\OneToMany(mappedBy: 'userToInvit', targetEntity: Invitation::class)]
+    private Collection $invitations;
+
+    #[ORM\OneToMany(mappedBy: 'userSentInvit', targetEntity: Invitation::class)]
+    private Collection $invitationsSent;
+
 
     public function __construct()
     {
@@ -81,6 +87,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->eventsOrganize = new ArrayCollection();
         $this->santas = new ArrayCollection();
         $this->userSantas = new ArrayCollection();
+        $this->invitations = new ArrayCollection();
+        $this->invitationsSent = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -317,5 +325,43 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setTimeSendResetPasswordLink(?DateTime $timeSendResetPasswordLink): void
     {
         $this->timeSendResetPasswordLink = $timeSendResetPasswordLink;
+    }
+
+    /**
+     * @return Collection<int, Invitation>
+     */
+    public function getInvitaions(): Collection
+    {
+        return $this->invitations;
+    }
+
+    /**
+     * @return Collection<int, Invitation>
+     */
+    public function getInvitationsSent(): Collection
+    {
+        return $this->invitationsSent;
+    }
+
+    public function addInvitationsSent(Invitation $invitationsSent): static
+    {
+        if (!$this->invitationsSent->contains($invitationsSent)) {
+            $this->invitationsSent->add($invitationsSent);
+            $invitationsSent->setUserSentInvit($this);
+        }
+
+        return $this;
+    }
+
+    public function removeInvitationsSent(Invitation $invitationsSent): static
+    {
+        if ($this->invitationsSent->removeElement($invitationsSent)) {
+            // set the owning side to null (unless already changed)
+            if ($invitationsSent->getUserSentInvit() === $this) {
+                $invitationsSent->setUserSentInvit(null);
+            }
+        }
+
+        return $this;
     }
 }
