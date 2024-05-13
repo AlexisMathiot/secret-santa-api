@@ -149,7 +149,7 @@ class EventController extends AbstractController
         $em->flush();
         $userName = $user->getUsername();
         $eventName = $event->getName();
-        return "L'utilisateur {$userName} a été ajouté a l'évènement {$eventName}";
+        return "L'utilisateur {$userName} à été ajouté a l'événement {$eventName}";
     }
 
     #[Route('api/events/remove/{userId}/{eventId}', name: 'remove_event_user', methods: ['GET'])]
@@ -331,7 +331,7 @@ class EventController extends AbstractController
         return new JsonResponse("Utilisateur ou évènement non trouvé", Response::HTTP_BAD_REQUEST, [], true);
     }
 
-    #[Route('events/invit/{token}', name: 'event_invit', methods: ['GET'])]
+    #[Route('process/invit/{token}', name: 'event_invit', methods: ['GET'])]
     public function processInvit(
         string                 $token,
         InvitationRepository   $invitationRepository,
@@ -341,6 +341,8 @@ class EventController extends AbstractController
         $invitation = $invitationRepository->findOneBy(['token' => $token]);
         if ($invitation !== null) {
             if ($invitation->getDate()->diff(new \DateTime(), true)->days > 7) {
+                $em->remove($invitation);
+                $em->flush();
                 return new JsonResponse("La date de validation du lien est dépassée merci de renvoyer une invitation",
                     Response::HTTP_OK, [],
                     true);
@@ -352,7 +354,6 @@ class EventController extends AbstractController
             $em->flush();
             return new JsonResponse($message, Response::HTTP_OK, [], true);
         }
-
         return new JsonResponse('Invitation non trouvée', Response::HTTP_NOT_FOUND, [], true);
     }
 
@@ -366,10 +367,10 @@ class EventController extends AbstractController
         $invitation = $invitationRepository->findOneBy(['token' => $token]);
         if ($invitation !== null) {
             $invitationToArray = ['id' => $invitation->getId(),
-                'userToInvit' => $invitation->getUserToInvit()->getId(),
-                'userSentInvit' => $invitation->getUserSentInvit()->getId(),
+                'userToInvitId' => $invitation->getUserToInvit()->getId(),
+                'userSentInvitId' => $invitation->getUserSentInvit()->getId(),
                 'date' => $invitation->getDate(),
-                'event' => $invitation->getEvent()->getId(),
+                'eventId' => $invitation->getEvent()->getId(),
                 'token' => $invitation->getToken()
             ];
             $jsonInvitation = $serializer->serialize($invitationToArray, 'json', ['groups' => 'invitation']);
