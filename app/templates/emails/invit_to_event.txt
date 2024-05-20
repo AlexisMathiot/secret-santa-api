@@ -1,0 +1,5 @@
+Bonjour {{ receiverUser.username }} !
+        Tu as été invité a l'évènement {{ event.name }} par {{ sendUser.username }}.
+        Si tu souhaites participer clique sur le lien {{ url|raw }}
+        Ce lien sera valable une semaine
+Merci

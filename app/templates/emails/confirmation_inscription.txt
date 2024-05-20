@@ -1,0 +1,5 @@
+Bonjour {{ user.username }} !
+    Merci d'avoir créé un compte sur l'application Secret Santa !
+    Pour te connecter clique copie colle le lien suivant :
+    {{ url|raw }}
+Merci

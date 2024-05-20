@@ -3,11 +3,14 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Repository\UserRepository;
+use App\Service\MailerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -42,5 +45,33 @@ class RegisterController extends AbstractController
         $jsonUser = $serializer->serialize($user, 'json');
 
         return new JsonResponse($jsonUser, Response::HTTP_CREATED, [], true);
+    }
+
+
+    /**
+     * @throws TransportExceptionInterface
+     */
+    #[Route('/api/send-email-confirmation-inscription/{email}', name: "api_send_confirmation_inscription_email", methods: ['GET'])]
+    public function sendConfirmationInsriptionEmail(
+        MailerService  $mail,
+        string         $email,
+        UserRepository $userRepository
+    ): JsonResponse
+    {
+        $user = $userRepository->findOneBy(['email' => $email]);
+        if ($user !== null) {
+            $url = getenv('app.front_base_url');
+            $context = compact('user', 'url');
+            $mail->send(
+                'no-reply@domain.fr',
+                $user->getEmail(),
+                'Bienvenue sur SecretSanta',
+                'confirmation_inscription',
+                $context
+            );
+            return new JsonResponse("Invitation envoyé", Response::HTTP_OK, [], true);
+        }
+
+        return new JsonResponse("Email non valide", Response::HTTP_NOT_FOUND, [], true);
     }
 }

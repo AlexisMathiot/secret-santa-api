@@ -268,7 +268,7 @@ class EventController extends AbstractController
         $em->flush();
     }
 
-    #[Route('api/events/usersToInvit', name: 'event_users_to_invit', methods: ['GET'])]
+    #[Route('api/events/users-to-invit', name: 'event_users_to_invit', methods: ['GET'])]
     public function listUsersInvitToEvent(UserRepository $userRepository, SerializerInterface $serializer): JsonResponse
     {
         $users = $userRepository->findAll();
@@ -322,7 +322,7 @@ class EventController extends AbstractController
             $mail->send(
                 'no-reply@domain.fr',
                 $receiverUser->getEmail(),
-                'Invitation a l\'évènement' . $event->getName(),
+                'Invitation a l\'évènement ' . $event->getName(),
                 'invit_to_event',
                 $context
             );

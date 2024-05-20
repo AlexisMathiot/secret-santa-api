@@ -3,7 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Repository\UserRepository;
 use App\Service\UserData;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Mapping\Entity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,5 +25,13 @@ class UserController extends AbstractController
 
         return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
 
+    }
+
+    #[Route('/api/user/delete-compte', name: 'api_user', methods: 'GET')]
+    public function deleteUserCompte(EntityManagerInterface $entityManager): Response
+    {
+        $user = $this->getUser();
+        $entityManager->remove($user);
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
 }

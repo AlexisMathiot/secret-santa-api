@@ -6,9 +6,9 @@ use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mailer\MailerInterface;
 
-class MailerService
+readonly class MailerService
 {
-    public function __construct(private readonly MailerInterface $mailer, private readonly string $sender_email)
+    public function __construct(private MailerInterface $mailer, private string $sender_email)
     {
     }
 
@@ -26,7 +26,7 @@ class MailerService
             //->priority(Email::PRIORITY_HIGH)
             ->subject($subject)
             ->htmlTemplate('emails/' . $template . '.html.twig')
-
+            ->textTemplate('emails/' . $template . '.txt')
             // pass variables (name => value) to the template
             ->context($context);
 

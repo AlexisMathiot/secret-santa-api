@@ -79,6 +79,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'userSentInvit', targetEntity: Invitation::class)]
     private Collection $invitationsSent;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $pseudo = null;
+
 
     public function __construct()
     {
@@ -361,6 +364,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $invitationsSent->setUserSentInvit(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getPseudo(): ?string
+    {
+        return $this->pseudo;
+    }
+
+    public function setPseudo(?string $pseudo): static
+    {
+        $this->pseudo = $pseudo;
 
         return $this;
     }

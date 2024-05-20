@@ -7,8 +7,8 @@
 <div class="body">
     <h1>Bonjour {{ receiverUser.username }} !</h1>
     <p>
-        Tu as été invité a l'évènement {{ event.name }} par {{ sendUser.username }}.
-        Si tu souhaites participer clique sur le lien {{ url|raw }} <br>
+        Tu as été invité a l'évènement {{ event.name }} par {{ sendUser.username }}.<br>
+        Si tu souhaites participer clique sur le lien suivant <a href="{{ url|raw }}">Participer</a> <br>
         Ce lien sera valable une semaine
     </p>
     <p>Merci</p>
