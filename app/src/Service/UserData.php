@@ -23,6 +23,7 @@ readonly class UserData
         $userArray = [
             'id' => $user->getId(),
             'userName' => $user->getUsername(),
+            'pseudo' => $user->getPseudo(),
             'email' => $user->getEmail(),
             'roles' => $user->getRoles(),
         ];

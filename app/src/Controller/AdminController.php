@@ -68,7 +68,6 @@ class AdminController extends AbstractController
                                SerializerInterface         $serializer,
                                User                        $currentUser,
                                EntityManagerInterface      $em,
-                               UserRepository              $userRepository,
                                ValidatorInterface          $validator,
                                UserPasswordHasherInterface $passwordHasher): JsonResponse
     {

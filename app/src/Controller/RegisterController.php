@@ -29,7 +29,6 @@ class RegisterController extends AbstractController
 
         /** @var User $user */
         $user = $serializer->deserialize($request->getContent(), User::class, 'json');
-
         $errors = $validator->validate($user);
 
         if ($errors->count() > 0) {

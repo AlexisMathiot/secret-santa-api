@@ -15,7 +15,6 @@ use App\Repository\UserRepository;
 use App\Service\MailerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Exception\ORMException;
-use JetBrains\PhpStorm\NoReturn;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -47,17 +46,16 @@ class EventController extends AbstractController
         $jsonEvents = $serializer->serialize($events, 'json', ['groups' => 'eventDetail']);
 
         return new JsonResponse($jsonEvents, Response::HTTP_OK, [], true);
-
     }
 
     #[Route('/api/events', name: "event_create", methods: ['POST'])]
-    public function addEvent(Request                $request,
-                             SerializerInterface    $serializer,
-                             EntityManagerInterface $em,
-                             UrlGeneratorInterface  $urlGenerator,
-                             ValidatorInterface     $validator
-    ): JsonResponse
-    {
+    public function addEvent(
+        Request                $request,
+        SerializerInterface    $serializer,
+        EntityManagerInterface $em,
+        UrlGeneratorInterface  $urlGenerator,
+        ValidatorInterface     $validator
+    ): JsonResponse {
         /** @var User $user */
         $user = $this->getUser();
 
@@ -84,20 +82,21 @@ class EventController extends AbstractController
         );
 
         return new JsonResponse($jsonEvent, Response::HTTP_CREATED, ["Location" => $location], true);
-
     }
 
     #[Route('api/events/{id}', name: 'edit_event', methods: ['PUT'])]
-    public function editEvent(Event                  $currentEvent,
-                              SerializerInterface    $serializer,
-                              Request                $request,
-                              ValidatorInterface     $validator,
-                              EntityManagerInterface $em): JsonResponse
-    {
+    public function editEvent(
+        Event                  $currentEvent,
+        SerializerInterface    $serializer,
+        Request                $request,
+        ValidatorInterface     $validator,
+        EntityManagerInterface $em
+    ): JsonResponse {
 
         $this->denyAccessUnlessGranted('edit', $currentEvent);
 
-        $updateEvent = $serializer->deserialize($request->getContent(),
+        $updateEvent = $serializer->deserialize(
+            $request->getContent(),
             Event::class,
             'json',
             [AbstractNormalizer::OBJECT_TO_POPULATE => $currentEvent]
@@ -116,13 +115,14 @@ class EventController extends AbstractController
 
 
     #[Route('api/events/add/{userId}/{eventId}', name: 'add_event_user', methods: ['GET'])]
-    public function addUserEvent(int                    $userId,
-                                 int                    $eventId,
-                                 UserRepository         $userRepository,
-                                 EventRepository        $eventRepository,
-                                 EntityManagerInterface $em,
-                                 GiftListRepository     $giftListRepository): JsonResponse
-    {
+    public function addUserEvent(
+        int                    $userId,
+        int                    $eventId,
+        UserRepository         $userRepository,
+        EventRepository        $eventRepository,
+        EntityManagerInterface $em,
+        GiftListRepository     $giftListRepository
+    ): JsonResponse {
 
         $user = $userRepository->findOneBy(['id' => $userId]);
         $event = $eventRepository->findOneBy(['id' => $eventId]);
@@ -137,7 +137,6 @@ class EventController extends AbstractController
         }
 
         return new JsonResponse('Utilisateur ou évènement non trouvé', Response::HTTP_BAD_REQUEST, [], true);
-
     }
 
     public function addUSerToEvent(User $user, Event $event, GiftListRepository $giftListRepository, EntityManagerInterface $em): string
@@ -153,13 +152,14 @@ class EventController extends AbstractController
     }
 
     #[Route('api/events/remove/{userId}/{eventId}', name: 'remove_event_user', methods: ['GET'])]
-    public function removeUserEvent(int                    $userId,
-                                    int                    $eventId,
-                                    UserRepository         $userRepository,
-                                    EventRepository        $eventRepository,
-                                    SantaRepository        $santaRepository,
-                                    EntityManagerInterface $em): JsonResponse
-    {
+    public function removeUserEvent(
+        int                    $userId,
+        int                    $eventId,
+        UserRepository         $userRepository,
+        EventRepository        $eventRepository,
+        SantaRepository        $santaRepository,
+        EntityManagerInterface $em
+    ): JsonResponse {
         $user = $userRepository->findOneBy(['id' => $userId]);
         $event = $eventRepository->findOneBy(['id' => $eventId]);
 
@@ -187,17 +187,16 @@ class EventController extends AbstractController
         }
 
         return new JsonResponse('Utilisateur ou évènement non trouvé', Response::HTTP_BAD_REQUEST, [], true);
-
     }
 
     #[Route('api/events/organizer/{userId}/{eventId}', name: 'set_organizer', methods: ['GET'])]
-    public function setOrganizer(int                    $userId,
-                                 int                    $eventId,
-                                 UserRepository         $userRepository,
-                                 EventRepository        $eventRepository,
-                                 EntityManagerInterface $em
-    ): JsonResponse
-    {
+    public function setOrganizer(
+        int                    $userId,
+        int                    $eventId,
+        UserRepository         $userRepository,
+        EventRepository        $eventRepository,
+        EntityManagerInterface $em
+    ): JsonResponse {
         $user = $userRepository->findOneBy(['id' => $userId]);
         $event = $eventRepository->findOneBy(['id' => $eventId]);
 
@@ -256,7 +255,6 @@ class EventController extends AbstractController
         $message = 'Pères Noel attribués';
 
         return new JsonResponse($message, Response::HTTP_OK, [], true);
-
     }
 
     public function clearSantasForEvant(Event $event, EntityManagerInterface $em): void
@@ -291,8 +289,7 @@ class EventController extends AbstractController
         EntityManagerInterface  $entityManager,
         MailerService           $mail,
         TokenGeneratorInterface $tokenGenerator
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $sendUser = $userRepository->findOneBy(['id' => $fromUserId]);
         $receiverUser = $userRepository->findOneBy(['id' => $toUserId]);
         $event = $eventRepository->findOneBy(['id' => $eventId]);
@@ -305,7 +302,8 @@ class EventController extends AbstractController
             $invitation = $invitationRepository->findOneBy(['userToInvit' => $receiverUser, 'userSentInvit' => $sendUser, 'event' => $event]);
             if ($invitation !== null && $invitation->getDate()->diff(new \DateTime(), true)->days < 7) {
                 return new JsonResponse(
-                    "Une invitation pour l'utilisateur {$receiverUser->getUsername()} à l'évènement {$event->getName()} éxiste déja");
+                    "Une invitation pour l'utilisateur {$receiverUser->getUsername()} à l'évènement {$event->getName()} éxiste déja"
+                );
             }
 
             $invitation = new Invitation();
@@ -336,16 +334,19 @@ class EventController extends AbstractController
         string                 $token,
         InvitationRepository   $invitationRepository,
         GiftListRepository     $giftListRepository,
-        EntityManagerInterface $em): JsonResponse
-    {
+        EntityManagerInterface $em
+    ): JsonResponse {
         $invitation = $invitationRepository->findOneBy(['token' => $token]);
         if ($invitation !== null) {
             if ($invitation->getDate()->diff(new \DateTime(), true)->days > 7) {
                 $em->remove($invitation);
                 $em->flush();
-                return new JsonResponse("La date de validation du lien est dépassée merci de renvoyer une invitation",
-                    Response::HTTP_OK, [],
-                    true);
+                return new JsonResponse(
+                    "La date de validation du lien est dépassée merci de renvoyer une invitation",
+                    Response::HTTP_OK,
+                    [],
+                    true
+                );
             }
             $userToInvit = $invitation->getUserToInvit();
             $event = $invitation->getEvent();
@@ -362,11 +363,11 @@ class EventController extends AbstractController
         string               $token,
         InvitationRepository $invitationRepository,
         SerializerInterface  $serializer
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $invitation = $invitationRepository->findOneBy(['token' => $token]);
         if ($invitation !== null) {
-            $invitationToArray = ['id' => $invitation->getId(),
+            $invitationToArray = [
+                'id' => $invitation->getId(),
                 'userToInvitId' => $invitation->getUserToInvit()->getId(),
                 'userSentInvitId' => $invitation->getUserSentInvit()->getId(),
                 'date' => $invitation->getDate(),

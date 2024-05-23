@@ -17,9 +17,11 @@ class Invitation
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'invitations')]
+    #[ORM\JoinColumn(name: 'user_to_invit_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ?User $userToInvit = null;
 
     #[ORM\ManyToOne(inversedBy: 'invitations')]
+    #[ORM\JoinColumn(name: 'event_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ?Event $event = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
