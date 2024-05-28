@@ -219,7 +219,6 @@ class EventController extends AbstractController
     public function deleteEvent(Event $event, EntityManagerInterface $em): JsonResponse
     {
         $this->denyAccessUnlessGranted('delete', $event);
-
         try {
             $em->remove($event);
             $em->flush();

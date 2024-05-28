@@ -18,9 +18,11 @@ class Santa
     private ?Event $event = null;
 
     #[ORM\ManyToOne(inversedBy: 'santas')]
+    #[ORM\JoinColumn(onDelete: 'cascade')]
     private ?User $santa = null;
 
     #[ORM\ManyToOne(inversedBy: 'userSantas')]
+    #[ORM\JoinColumn(onDelete: 'cascade')]
     private ?User $user;
 
     public function getUser(): User

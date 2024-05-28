@@ -41,26 +41,17 @@ class AdminController extends AbstractController
     }
 
     #[Route('/api/admin/user/{id}', name: "user_delete", methods: ['DELETE'])]
-    public function deleteUser(User                   $user,
-                               EntityManagerInterface $em,
-                               SantaRepository        $santaRepository): JsonResponse
+    public function deleteUser(User $user, EntityManagerInterface $em,): JsonResponse
     {
-        $santas = $santaRepository->findBy(['user' => $user]);
         $eventOrganize = $user->getEventsOrganize();
 
         if ($eventOrganize->count() > 0) {
             return new JsonResponse('Vous êtes organisateur d\'un évènement, merci de changer l\'organisateur');
         }
-
-        foreach ($santas as $santa) {
-            $em->remove($santa);
-        }
-        $em->flush();
         $em->remove($user);
         $em->flush();
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
-
     }
 
     #[Route('/api/admin/user/{id}', name: "user_update", methods: ['PUT'])]

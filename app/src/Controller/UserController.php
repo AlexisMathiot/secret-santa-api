@@ -8,6 +8,7 @@ use App\Service\UserData;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -26,25 +27,29 @@ class UserController extends AbstractController
     }
 
     #[Route('/api/user/delete-compte', name: 'api_user', methods: 'GET')]
-    public function deleteUserCompte(EntityManagerInterface $em, SantaRepository $santaRepository): Response
+    public function deleteUserCompte(EntityManagerInterface $em): Response
     {
         $user = $this->getUser();
-        $santas = $santaRepository->findBy(['user' => $user]);
         /** @var  User $user */
         $eventOrganize = $user->getEventsOrganize();
-        $invitations = $user->getInvitaions();
 
         if ($eventOrganize->count() > 0) {
             return new JsonResponse('Vous êtes organisateur d\'un évènement, merci de changer l\'organisateur');
         }
 
-        foreach ($santas as $santa) {
-            $em->remove($santa);
-        }
-        $em->flush();
-
         $em->remove($user);
         $em->flush();
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
+
+    #[Route('/api/user/{id}', name: 'api_user_update_surname', methods: 'PUT')]
+    public function updateSurname(User $user, Request $request, EntityManagerInterface $em): Response {
+
+        $pseudo =  json_decode($request->getContent(), true)['pseudo'];
+        $user->setPseudo($pseudo);
+        $em->persist($user);
+        $em->flush();
+
+        return $this->json($user, Response::HTTP_OK);
     }
 }
