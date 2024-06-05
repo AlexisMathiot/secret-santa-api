@@ -79,6 +79,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'userSentInvit', targetEntity: Invitation::class)]
     private Collection $invitationsSent;
 
+    #[Groups('eventDetail')]
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $pseudo = null;
 
