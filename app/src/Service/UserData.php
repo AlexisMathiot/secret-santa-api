@@ -41,6 +41,7 @@ readonly class UserData
                     'giftList' => $giftList,
                     'santaOfId' => $eventSanta?->getSanta()->getId(),
                     'santaOf' => $eventSanta?->getSanta()->getUsername(),
+                    'santaPseudo' => $eventSanta?->getSanta()->getPseudo(),
                     'santaOfGiftList' => $this->giftListRepository->findOneBy([
                         'event' => $event,
                         'user' => $eventSanta?->getSanta()
