@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Repository\SantaRepository;
 use App\Service\UserData;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -43,13 +42,20 @@ class UserController extends AbstractController
     }
 
     #[Route('/api/user/{id}', name: 'api_user_update_surname', methods: 'PUT')]
-    public function updateSurname(User $user, Request $request, EntityManagerInterface $em): Response {
-
-        $pseudo =  json_decode($request->getContent(), true)['pseudo'];
+    public function updateSurname(User                   $user,
+                                  Request                $request,
+                                  EntityManagerInterface $em,
+                                  UserData               $userData,
+                                  SerializerInterface    $serializer):
+    Response
+    {
+        $pseudo = json_decode($request->getContent(), true)['pseudo'];
         $user->setPseudo($pseudo);
         $em->persist($user);
         $em->flush();
 
-        return $this->json($user, Response::HTTP_OK);
+        $userArray = $userData->userDataToArray($user);
+        $userJson = $serializer->serialize($userArray, 'json');
+        return new JsonResponse($userJson, Response::HTTP_OK, [], true);
     }
 }
