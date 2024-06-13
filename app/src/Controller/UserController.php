@@ -55,7 +55,7 @@ class UserController extends AbstractController
         $em->flush();
 
         $userArray = $userData->userDataToArray($user);
-        $userJson = $serializer->serialize($userArray, 'json');
+        $userJson = $serializer->serialize($userArray, 'json', ['groups' => 'userDetail']);
         return new JsonResponse($userJson, Response::HTTP_OK, [], true);
     }
 }
