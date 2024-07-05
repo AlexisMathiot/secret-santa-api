@@ -59,7 +59,8 @@ class RegisterController extends AbstractController
     {
         $user = $userRepository->findOneBy(['email' => $email]);
         if ($user !== null) {
-            $url = getenv('app.front_base_url');
+            $baseurl = $this->getParameter('app.front_base_url');
+            $url = $baseurl . '/login';
             $context = compact('user', 'url');
             $mail->send(
                 'no-reply@domain.fr',
