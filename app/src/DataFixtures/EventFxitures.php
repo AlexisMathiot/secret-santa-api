@@ -17,7 +17,7 @@ class EventFxitures extends Fixture implements DependentFixtureInterface
 
     public function __construct(private readonly GiftRepository  $giftRepository,
                                 private readonly UserRepository  $userRepository,
-                                private readonly EventRepository $eventRepository,)
+                                private readonly EventRepository $eventRepository)
     {
     }
 

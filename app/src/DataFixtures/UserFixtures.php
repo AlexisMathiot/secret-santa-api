@@ -25,6 +25,13 @@ class UserFixtures extends Fixture
         $user->setPassword($this->userPasswordHasher->hashPassword($user, "password"));
         $manager->persist($user);
 
+        $user = new User();
+        $user->setUsername('Alex');
+        $user->setEmail("alex@santaapi.com");
+        $user->setRoles(["ROLE_USER"]);
+        $user->setPassword($this->userPasswordHasher->hashPassword($user, "password"));
+        $manager->persist($user);
+
         // Création d'un user admin
         $userAdmin = new User();
         $userAdmin->setUsername('Admin');

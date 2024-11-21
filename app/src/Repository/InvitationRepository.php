@@ -4,7 +4,10 @@ namespace App\Repository;
 
 use App\Entity\Invitation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\NonUniqueResultException;
+use Doctrine\ORM\NoResultException;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\QueryBuilder;
 
 /**
  * @extends ServiceEntityRepository<Invitation>
@@ -16,33 +19,39 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class InvitationRepository extends ServiceEntityRepository
 {
+
+    private const DAYS_BEFORE_REJECTED_REMOVAL = 7;
+
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Invitation::class);
     }
 
-//    /**
-//     * @return Invitation[] Returns an array of Invitation objects
-//     */
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('i')
-//            ->andWhere('i.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('i.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
+    /**
+     * @throws \DateMalformedStringException
+     * @throws NonUniqueResultException
+     * @throws NoResultException
+     */
+    public function countOldRejected(): int
+    {
+        return $this->getOldRejectedQueryBuilder()->select('COUNT(c.id)')->getQuery()->getSingleScalarResult();
+    }
 
-//    public function findOneBySomeField($value): ?Invitation
-//    {
-//        return $this->createQueryBuilder('i')
-//            ->andWhere('i.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
+    /**
+     * @throws \DateMalformedStringException
+     */
+    public function deleteOldRejected(): int
+    {
+        return $this->getOldRejectedQueryBuilder()->delete()->getQuery()->execute();
+    }
+
+    /**
+     * @throws \DateMalformedStringException
+     */
+    private function getOldRejectedQueryBuilder(): QueryBuilder
+    {
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.date < :date')
+            ->setParameter('date', new \DateTimeImmutable(-self::DAYS_BEFORE_REJECTED_REMOVAL . ' days'));
+    }
 }
