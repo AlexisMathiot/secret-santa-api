@@ -390,11 +390,11 @@ class EventController extends AbstractController
     /**
      * @throws \DateMalformedStringException
      */
-    #[Route('api/invitations/{eventId}', methods: ['GET'])]
+    #[Route('api/invitations/{eventId}', name: 'app_event_get_invitation_by_event', methods: ['GET'])]
     public function getInvitationByEvent(
-        EventRepository     $eventRepository,
-        int                 $eventId,
-        SerializerInterface $serializer,
+        EventRepository      $eventRepository,
+        int                  $eventId,
+        SerializerInterface  $serializer,
         InvitationRepository $invitationRepository
     ): JsonResponse
     {
