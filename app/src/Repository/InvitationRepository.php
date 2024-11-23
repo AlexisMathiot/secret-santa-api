@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Event;
 use App\Entity\Invitation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\NonUniqueResultException;
@@ -53,5 +54,25 @@ class InvitationRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('c')
             ->andWhere('c.date < :date')
             ->setParameter('date', new \DateTimeImmutable(-self::DAYS_BEFORE_REJECTED_REMOVAL . ' days'));
+    }
+
+    /**
+     * @throws \DateMalformedStringException
+     */
+    private function getPendingInvitationByEventQueryBuilder(Event $event): QueryBuilder
+    {
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.date >= :date')
+            ->andWhere('c.event = :event')
+            ->setParameter('date', new \DateTimeImmutable(-self::DAYS_BEFORE_REJECTED_REMOVAL . ' days'))
+            ->setParameter('event', $event);
+    }
+
+    /**
+     * @throws \DateMalformedStringException
+     */
+    public function selectPendingInvitationByEvent(Event $event): array
+    {
+        return $this->getPendingInvitationByEventQueryBuilder($event)->getQuery()->getResult();
     }
 }

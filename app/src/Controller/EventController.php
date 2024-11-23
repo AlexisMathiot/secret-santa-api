@@ -55,7 +55,8 @@ class EventController extends AbstractController
         EntityManagerInterface $em,
         UrlGeneratorInterface  $urlGenerator,
         ValidatorInterface     $validator
-    ): JsonResponse {
+    ): JsonResponse
+    {
         /** @var User $user */
         $user = $this->getUser();
 
@@ -91,7 +92,8 @@ class EventController extends AbstractController
         Request                $request,
         ValidatorInterface     $validator,
         EntityManagerInterface $em
-    ): JsonResponse {
+    ): JsonResponse
+    {
 
         $this->denyAccessUnlessGranted('edit', $currentEvent);
 
@@ -122,7 +124,8 @@ class EventController extends AbstractController
         EventRepository        $eventRepository,
         EntityManagerInterface $em,
         GiftListRepository     $giftListRepository
-    ): JsonResponse {
+    ): JsonResponse
+    {
 
         $user = $userRepository->findOneBy(['id' => $userId]);
         $event = $eventRepository->findOneBy(['id' => $eventId]);
@@ -159,7 +162,8 @@ class EventController extends AbstractController
         EventRepository        $eventRepository,
         SantaRepository        $santaRepository,
         EntityManagerInterface $em
-    ): JsonResponse {
+    ): JsonResponse
+    {
         $user = $userRepository->findOneBy(['id' => $userId]);
         $event = $eventRepository->findOneBy(['id' => $eventId]);
 
@@ -196,7 +200,8 @@ class EventController extends AbstractController
         UserRepository         $userRepository,
         EventRepository        $eventRepository,
         EntityManagerInterface $em
-    ): JsonResponse {
+    ): JsonResponse
+    {
         $user = $userRepository->findOneBy(['id' => $userId]);
         $event = $eventRepository->findOneBy(['id' => $eventId]);
 
@@ -288,7 +293,8 @@ class EventController extends AbstractController
         EntityManagerInterface  $entityManager,
         MailerService           $mail,
         TokenGeneratorInterface $tokenGenerator
-    ): JsonResponse {
+    ): JsonResponse
+    {
         $sendUser = $userRepository->findOneBy(['id' => $fromUserId]);
         $receiverUser = $userRepository->findOneBy(['id' => $toUserId]);
         $event = $eventRepository->findOneBy(['id' => $eventId]);
@@ -334,7 +340,8 @@ class EventController extends AbstractController
         InvitationRepository   $invitationRepository,
         GiftListRepository     $giftListRepository,
         EntityManagerInterface $em
-    ): JsonResponse {
+    ): JsonResponse
+    {
         $invitation = $invitationRepository->findOneBy(['token' => $token]);
         if ($invitation !== null) {
             if ($invitation->getDate()->diff(new \DateTime(), true)->days > 7) {
@@ -362,7 +369,8 @@ class EventController extends AbstractController
         string               $token,
         InvitationRepository $invitationRepository,
         SerializerInterface  $serializer
-    ): JsonResponse {
+    ): JsonResponse
+    {
         $invitation = $invitationRepository->findOneBy(['token' => $token]);
         if ($invitation !== null) {
             $invitationToArray = [
@@ -377,5 +385,25 @@ class EventController extends AbstractController
             return new JsonResponse($jsonInvitation, Response::HTTP_OK, [], true);
         }
         return new JsonResponse('Invitation non trouvée', Response::HTTP_NOT_FOUND, [], true);
+    }
+
+    /**
+     * @throws \DateMalformedStringException
+     */
+    #[Route('api/invitations/{eventId}', methods: ['GET'])]
+    public function getInvitationByEvent(
+        EventRepository     $eventRepository,
+        int                 $eventId,
+        SerializerInterface $serializer,
+        InvitationRepository $invitationRepository
+    ): JsonResponse
+    {
+        $event = $eventRepository->findOneBy(['id' => $eventId]);
+        if ($event !== null) {
+            $invitations = $invitationRepository->selectPendingInvitationByEvent($event);
+            $jsonInvitations = $serializer->serialize($invitations, 'json', ['groups' => 'invitation']);
+            return new JsonResponse($jsonInvitations, Response::HTTP_OK, [], true);
+        }
+        return new JsonResponse('Evènement non trouvé', Response::HTTP_NOT_FOUND, [], true);
     }
 }
