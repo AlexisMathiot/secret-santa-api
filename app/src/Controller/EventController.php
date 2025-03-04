@@ -55,8 +55,7 @@ class EventController extends AbstractController
         EntityManagerInterface $em,
         UrlGeneratorInterface  $urlGenerator,
         ValidatorInterface     $validator
-    ): JsonResponse
-    {
+    ): JsonResponse {
         /** @var User $user */
         $user = $this->getUser();
 
@@ -92,8 +91,7 @@ class EventController extends AbstractController
         Request                $request,
         ValidatorInterface     $validator,
         EntityManagerInterface $em
-    ): JsonResponse
-    {
+    ): JsonResponse {
 
         $this->denyAccessUnlessGranted('edit', $currentEvent);
 
@@ -124,8 +122,7 @@ class EventController extends AbstractController
         EventRepository        $eventRepository,
         EntityManagerInterface $em,
         GiftListRepository     $giftListRepository
-    ): JsonResponse
-    {
+    ): JsonResponse {
 
         $user = $userRepository->findOneBy(['id' => $userId]);
         $event = $eventRepository->findOneBy(['id' => $eventId]);
@@ -162,8 +159,7 @@ class EventController extends AbstractController
         EventRepository        $eventRepository,
         SantaRepository        $santaRepository,
         EntityManagerInterface $em
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $user = $userRepository->findOneBy(['id' => $userId]);
         $event = $eventRepository->findOneBy(['id' => $eventId]);
 
@@ -200,8 +196,7 @@ class EventController extends AbstractController
         UserRepository         $userRepository,
         EventRepository        $eventRepository,
         EntityManagerInterface $em
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $user = $userRepository->findOneBy(['id' => $userId]);
         $event = $eventRepository->findOneBy(['id' => $eventId]);
 
@@ -240,8 +235,12 @@ class EventController extends AbstractController
         $this->denyAccessUnlessGranted('delete', $event);
 
         $users = $event->getUsers();
+        $users = $users->toArray();
+        shuffle($users); 
 
-        if ($users->count() <= 1) {
+        $count = count($users);
+
+        if (count($users) <= 1) {
             return new JsonResponse('Il doit y avoir au moins 2 personnes participant a l\'évènement');
         }
 
@@ -251,7 +250,7 @@ class EventController extends AbstractController
             $santa = new Santa();
             $santa->setEvent($event);
             $santa->setUser($user);
-            $santa->setSanta($users[($i + 1) % count($users)]);
+            $santa->setSanta($users[($i + 1) % $count]); // L'utilisateur suivant est son destinataire (boucle)
             $em->persist($santa);
         }
 
@@ -293,8 +292,7 @@ class EventController extends AbstractController
         EntityManagerInterface  $entityManager,
         MailerService           $mail,
         TokenGeneratorInterface $tokenGenerator
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $sendUser = $userRepository->findOneBy(['id' => $fromUserId]);
         $receiverUser = $userRepository->findOneBy(['id' => $toUserId]);
         $event = $eventRepository->findOneBy(['id' => $eventId]);
@@ -340,8 +338,7 @@ class EventController extends AbstractController
         InvitationRepository   $invitationRepository,
         GiftListRepository     $giftListRepository,
         EntityManagerInterface $em
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $invitation = $invitationRepository->findOneBy(['token' => $token]);
         if ($invitation !== null) {
             if ($invitation->getDate()->diff(new \DateTime(), true)->days > 7) {
@@ -369,8 +366,7 @@ class EventController extends AbstractController
         string               $token,
         InvitationRepository $invitationRepository,
         SerializerInterface  $serializer
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $invitation = $invitationRepository->findOneBy(['token' => $token]);
         if ($invitation !== null) {
             $invitationToArray = [
@@ -396,8 +392,7 @@ class EventController extends AbstractController
         int                  $eventId,
         SerializerInterface  $serializer,
         InvitationRepository $invitationRepository
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $event = $eventRepository->findOneBy(['id' => $eventId]);
         if ($event !== null) {
             $invitations = $invitationRepository->selectPendingInvitationByEvent($event);
