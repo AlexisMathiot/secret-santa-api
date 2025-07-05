@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\User;
-use App\Repository\SantaRepository;
 use App\Repository\UserRepository;
 use App\Service\UserData;
 use Doctrine\ORM\EntityManagerInterface;

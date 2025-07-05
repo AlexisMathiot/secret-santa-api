@@ -7,8 +7,10 @@ use App\Service\MailerService;
 use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
@@ -19,6 +21,11 @@ use Symfony\Component\Serializer\SerializerInterface;
 
 class SecurityController extends AbstractController
 {
+
+    public const SCOPES = [
+        'google' => [],
+    ];
+
     /**
      * @throws TransportExceptionInterface
      * @throws Exception
@@ -30,8 +37,7 @@ class SecurityController extends AbstractController
         TokenGeneratorInterface $tokenGenerator,
         EntityManagerInterface  $entityManager,
         MailerService           $mail
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $email = json_decode($request->getContent(), true)['email'];
         $user = $userRepository->findOneBy(['email' => $email]);
 
@@ -70,8 +76,7 @@ class SecurityController extends AbstractController
         UserRepository      $userRepository,
         Request             $request,
         SerializerInterface $serializer
-    ): Response
-    {
+    ): Response {
         $token = json_decode($request->getContent(), true)['token'];
         $user = $userRepository->findOneBy(['resetToken' => $token]);
         if ($user !== null) {
@@ -81,7 +86,8 @@ class SecurityController extends AbstractController
             if ($numberMinutesSinceMailSend > 120) {
                 return new JsonResponse(
                     'Durée de validité du lien dépassé merci de refaire une demande de modification de mot de passe',
-                    Response::HTTP_OK, [],
+                    Response::HTTP_OK,
+                    [],
                     true
                 );
             }
@@ -97,8 +103,7 @@ class SecurityController extends AbstractController
         Request                     $request,
         UserPasswordHasherInterface $passwordHasher,
         EntityManagerInterface      $entityManager
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $token = json_decode($request->getContent(), true)['token'];
         $password = json_decode($request->getContent(), true)['password'];
         $user = $userRepository->findOneBy(['resetToken' => $token]);
@@ -119,5 +124,21 @@ class SecurityController extends AbstractController
         }
 
         return new JsonResponse('Utilisateur non trouvé', Response::HTTP_NOT_FOUND, [], true);
+    }
+
+    #[Route("/oauth/connect/{service}", name: 'auth_oauth_connect', methods: ['GET'])]
+    public function connect(string $service, ClientRegistry $clientRegistry): RedirectResponse
+    {
+        if (! in_array($service, array_keys(self::SCOPES), true)) {
+            throw $this->createNotFoundException();
+        }
+
+        return $clientRegistry->getClient($service)->redirect(self::SCOPES[$service], []);
+    }
+
+    #[Route('/oauth/check/{service}', name: 'auth_oauth_check', methods: ['GET', 'POST'])]
+    public function check(): Response
+    {
+        return new Response(status: 200);
     }
 }
