@@ -1,7 +1,7 @@
 security:
   # https://symfony.com/doc/current/security.html#registering-the-user-hashing-passwords
   password_hashers:
-    Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+    Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: "auto"
   # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
   providers:
     # used to reload user from session & other features (e.g. switch_user)
@@ -47,12 +47,12 @@ security:
   # Easy way to control access for large sections of your site
   # Note: Only the *first* access control that matches will be used
   access_control:
-    - { path: /api/login, roles: PUBLIC_ACCESS }
-    - { path: /api/signin, roles: PUBLIC_ACCESS }
-    - { path: ^/api/send-email-confirmation-inscription, roles: PUBLIC_ACCESS }
-    - { path: ^/api/admin, roles: ROLE_ADMIN }
-    - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
-
+    - { path: ^/oauth, roles: PUBLIC_ACCESS }
+    - { path: ^/api/login, roles: PUBLIC_ACCESS }
+    - { path: ^/api/public, roles: PUBLIC_ACCESS }
+    - { path: ^/api, roles: ROLE_USER }
+    - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
+    - { path: ^/reset-password, roles: PUBLIC_ACCESS }
 
 when@test:
   security:

@@ -2,7 +2,7 @@
 services:
   database:
     container_name: database
-    image: mysql:8.0
+    image: docker.io/mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: symfony
@@ -19,7 +19,7 @@ services:
       context: ./php
     ports:
       - "8080:80"
-      - "443:443"
+      - "8443:443"
     extra_hosts:
       - host.docker.internal:host-gateway
       - "santaApi.local:127.0.0.1"
@@ -32,8 +32,21 @@ services:
     depends_on:
       - database
 
+  phpmyadmin:
+    container_name: phpmyadmin
+    image: docker.io/phpmyadmin/phpmyadmin
+    ports:
+      - "8082:80"
+    environment:
+      PMA_HOST: database
+      PMA_PORT: 3306
+      PMA_USER: symfony
+      PMA_PASSWORD: pass
+    depends_on:
+      - database
+
   maildev:
-    image: maildev/maildev
+    image: docker.io/maildev/maildev
     container_name: maildev_docker_symfony
     command: bin/maildev --web 80 --smtp 25 --hide-extensions STARTTLS
     ports:
