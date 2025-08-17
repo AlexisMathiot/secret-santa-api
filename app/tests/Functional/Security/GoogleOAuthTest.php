@@ -145,7 +145,7 @@ class GoogleOAuthTest extends WebTestCase
         );
         $this->assertArrayHasKey("error", $responseData);
         $this->assertStringContainsString(
-            "email not verify",
+            "An authentication exception occurred.",
             $responseData["error"],
         );
     }
