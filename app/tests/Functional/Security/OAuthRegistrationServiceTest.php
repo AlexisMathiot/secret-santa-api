@@ -14,12 +14,14 @@ class OAuthRegistrationServiceTest extends TestCase
     {
         // Mock du GoogleUser
         $googleUser = $this->createMock(GoogleUser::class);
+        /** @var GoogleUser&\PHPUnit\Framework\MockObject\MockObject $googleUser */
         $googleUser->method("getEmail")->willReturn("test@example.com");
         $googleUser->method("getFirstName")->willReturn("John");
         $googleUser->method("getId")->willReturn("google123");
 
         // Mock du UserRepository
         $userRepository = $this->createMock(UserRepository::class);
+        /** @var UserRepository&\PHPUnit\Framework\MockObject\MockObject $userRepository */
         $userRepository
             ->expects($this->once())
             ->method("add")
