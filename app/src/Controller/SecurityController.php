@@ -189,4 +189,12 @@ class SecurityController extends AbstractController
     {
         return new Response(status: 200);
     }
+
+    #[Route('/api/login_check', name: 'api_login', methods: ['POST'])]
+    public function login(): void
+    {
+        // Cette méthode ne sera jamais exécutée car Symfony intercepte la requête
+        // Elle sert juste à créer la route pour que Symfony puisse l'intercepter
+        throw new \LogicException('This method can be blank - it will be intercepted by the login key on your firewall.');
+    }
 }

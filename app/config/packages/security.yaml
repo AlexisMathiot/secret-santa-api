@@ -22,17 +22,14 @@ security:
       #      access_token:
       #        token_handler: App\security\AccessTokenHandler
 
-    login:
-      pattern: ^/api/login
+    api:
+      pattern: ^/api
       stateless: true
       json_login:
         username_path: email
         check_path: /api/login_check
         success_handler: lexik_jwt_authentication.handler.authentication_success
         failure_handler: lexik_jwt_authentication.handler.authentication_failure
-    api:
-      pattern: ^/api
-      stateless: true
       jwt: ~
     main:
       custom_authenticators:
@@ -48,7 +45,6 @@ security:
   # Note: Only the *first* access control that matches will be used
   access_control:
     - { path: ^/oauth, roles: PUBLIC_ACCESS }
-    - { path: ^/api/login, roles: PUBLIC_ACCESS }
     - { path: ^/api/public, roles: PUBLIC_ACCESS }
     - { path: ^/api/doc, roles: PUBLIC_ACCESS }
     - { path: ^/api, roles: ROLE_USER }
