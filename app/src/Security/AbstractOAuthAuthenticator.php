@@ -13,7 +13,8 @@ use Lexik\Bundle\JWTAuthenticationBundle\Event\AuthenticationSuccessEvent;
 use Lexik\Bundle\JWTAuthenticationBundle\Events;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Cookie;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -25,16 +26,19 @@ use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPasspor
 
 abstract class AbstractOAuthAuthenticator extends OAuth2Authenticator
 {
-
     protected string $serviceName = '';
+    private string $frontendUrl;
 
     public function __construct(
         private readonly ClientRegistry $clientRegistry,
         private readonly UserRepository $userRepository,
         private readonly OAuthRegistrationService $registrationService,
         private readonly JWTTokenManagerInterface $jwtManager,
-        private readonly EventDispatcherInterface $eventDispatcher
-    ) {}
+        private readonly EventDispatcherInterface $eventDispatcher,
+        string $frontendUrl = 'http://localhost:3000'
+    ) {
+        $this->frontendUrl = $frontendUrl;
+    }
 
     public function supports(Request $request): ?bool
     {
@@ -45,22 +49,33 @@ abstract class AbstractOAuthAuthenticator extends OAuth2Authenticator
     {
         /** @var User $user */
         $user = $token->getUser();
-        
+
         // Génération du token JWT via LexikJWT
         $jwt = $this->jwtManager->create($user);
-        
-        // Créer la réponse dans le même format que LexikJWT
+
+        // Créer un cookie HTTPOnly sécurisé
+        $cookie = new Cookie(
+            name: 'jwt_token',
+            value: $jwt,
+            expire: time() + (24 * 60 * 60), // 24 heures
+            path: '/',
+            domain: null,
+            secure: false, // true en production avec HTTPS
+            httpOnly: true, // Empêche l'accès via JavaScript côté client
+            raw: false,
+            sameSite: Cookie::SAMESITE_LAX
+        );
+
+        // Créer la réponse de redirection vers le frontend
+        $redirectUrl = $this->frontendUrl . '/auth/callback';
+        $response = new RedirectResponse($redirectUrl);
+        $response->headers->setCookie($cookie);
+
+        // Déclencher l'événement LexikJWT pour la cohérence
         $data = ['token' => $jwt];
-        $response = new JsonResponse($data);
-        
-        // Déclencher le même événement que LexikJWT pour la cohérence
-        // (si vous avez des listeners sur cet événement)
         $event = new AuthenticationSuccessEvent($data, $user, $response);
         $this->eventDispatcher->dispatch($event, Events::AUTHENTICATION_SUCCESS);
-                
-        // Récupérer les données potentiellement modifiées par les listeners
-        $response->setData($event->getData());
-        
+
         return $response;
     }
 
@@ -68,7 +83,10 @@ abstract class AbstractOAuthAuthenticator extends OAuth2Authenticator
     {
         $message = strtr($exception->getMessageKey(), $exception->getMessageData());
 
-        return new JsonResponse(['error' => $message], Response::HTTP_FORBIDDEN);
+        // Redirection vers le frontend avec un paramètre d'erreur
+        $redirectUrl = $this->frontendUrl . '/auth/error?message=' . urlencode($message);
+
+        return new RedirectResponse($redirectUrl);
     }
 
     public function authenticate(Request $request): Passport
