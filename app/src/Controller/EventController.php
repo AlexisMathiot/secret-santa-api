@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Dto\EventCreateDto;
 use App\Entity\Event;
 use App\Entity\User;
 use App\Repository\EventRepository;
@@ -25,6 +26,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\Requirement\Requirement;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route("/api/events")]
 #[
@@ -194,9 +196,11 @@ class EventController extends AbstractController
     ]
     #[
         OA\RequestBody(
-            description: 'Données de l\'événement à créer',
+            description: "Données de l'événement à créer",
             required: true,
-            content: new OA\JsonContent(ref: new Model(type: Event::class)),
+            content: new OA\JsonContent(
+                ref: new Model(type: EventCreateDto::class),
+            ),
         ),
     ]
     #[
@@ -250,25 +254,35 @@ class EventController extends AbstractController
     public function addEvent(
         Request $request,
         UrlGeneratorInterface $urlGenerator,
+        ValidatorInterface $validator,
     ): JsonResponse {
         /** @var User $user */
         $user = $this->getUser();
 
-        $event = $this->serializer->deserialize(
+        $dto = $this->serializer->deserialize(
             $request->getContent(),
-            Event::class,
+            EventCreateDto::class,
             "json",
         );
 
-        $event->setOrganizer($user);
-
-        $validation = $this->validationService->validateEvent($event);
-        if (!$validation["isValid"]) {
+        // Validation du DTO
+        $errors = $validator->validate($dto);
+        if (count($errors) > 0) {
+            $errorMessages = [];
+            foreach ($errors as $error) {
+                $errorMessages[] =
+                    $error->getPropertyPath() . ": " . $error->getMessage();
+            }
             return new JsonResponse(
-                $validation["errors"],
+                ["errors" => $errorMessages],
                 Response::HTTP_BAD_REQUEST,
             );
         }
+
+        $event = new Event();
+        $event->setName($dto->title);
+
+        $event->setOrganizer($user);
 
         $this->entityManager->persist($event);
         $this->entityManager->flush();
@@ -910,7 +924,7 @@ class EventController extends AbstractController
 
     #[Route("/set-santa/{id}", name: "user_set_santa", methods: ["GET"])]
     #[
-        OA\Post(
+        OA\GET(
             path: "/api/events/set-santa/{id}",
             summary: "Assigner les Père Noël secrets",
             description: 'Lance l\'assignation automatique des Père Noël secrets pour un événement',

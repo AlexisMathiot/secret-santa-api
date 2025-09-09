@@ -16,18 +16,17 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    #[Groups(['eventDetail', 'userList', 'usersInvitToEvent', 'invitation'])]
+    #[Groups(["eventDetail", "userList", "usersInvitToEvent", "invitation"])]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
-    #[Groups(["userList", "eventDetail", "usersInvitToEvent", 'invitation'])]
+    #[Groups(["userList", "eventDetail", "usersInvitToEvent", "invitation"])]
     #[ORM\Column(length: 180)]
-    #[Assert\NotBlank(message: "Le nom d'utilisateur est obligatoire")]
     private ?string $username = null;
 
-    #[Groups(["userList", "eventDetail", "usersInvitToEvent", 'invitation'])]
+    #[Groups(["userList", "eventDetail", "usersInvitToEvent", "invitation"])]
     #[ORM\Column(length: 180, unique: true, nullable: true)]
     private ?string $email = null;
 
@@ -43,24 +42,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[Groups("userList")]
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: GiftList::class, cascade: ['persist', 'remove'])]
+    #[
+        ORM\OneToMany(
+            mappedBy: "user",
+            targetEntity: GiftList::class,
+            cascade: ["persist", "remove"],
+        ),
+    ]
     private Collection|null $giftList = null;
 
-    #[ORM\ManyToMany(targetEntity: Event::class, mappedBy: 'users')]
+    #[ORM\ManyToMany(targetEntity: Event::class, mappedBy: "users")]
     private Collection $events;
 
-    #[ORM\OneToMany(mappedBy: 'organizer', targetEntity: Event::class)]
-    #[ORM\JoinColumn(nullable: true, onDelete: ['cascade'])]
+    #[ORM\OneToMany(mappedBy: "organizer", targetEntity: Event::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: ["cascade"])]
     private Collection $eventsOrganize;
 
     #[Groups("userResetPassword")]
     #[ORM\Column(nullable: true)]
     private ?string $resetToken = null;
 
-    #[ORM\OneToMany(mappedBy: 'santa', targetEntity: Santa::class)]
+    #[ORM\OneToMany(mappedBy: "santa", targetEntity: Santa::class)]
     private Collection $santas;
 
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Santa::class)]
+    #[ORM\OneToMany(mappedBy: "user", targetEntity: Santa::class)]
     private Collection $userSantas;
 
     /**
@@ -68,21 +73,49 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[Groups("userResetPassword")]
     #[Assert\DateTime]
-    #[ORM\Column(type: 'datetime', nullable: true)]
+    #[ORM\Column(type: "datetime", nullable: true)]
     protected ?DateTime $timeSendResetPasswordLink = null;
 
-    #[ORM\OneToMany(mappedBy: 'userToInvit', targetEntity: Invitation::class)]
+    #[ORM\OneToMany(mappedBy: "userToInvit", targetEntity: Invitation::class)]
     private Collection $invitations;
 
-    #[ORM\OneToMany(mappedBy: 'userSentInvit', targetEntity: Invitation::class)]
+    #[ORM\OneToMany(mappedBy: "userSentInvit", targetEntity: Invitation::class)]
     private Collection $invitationsSent;
 
-    #[Groups('eventDetail')]
+    #[Groups("eventDetail")]
     #[ORM\Column(length: 255, unique: true, nullable: true)]
     private ?string $pseudo = null;
 
     #[ORM\Column(length: 255, unique: true, nullable: true)]
     private ?string $google_id = null;
+
+    #[ORM\Column(type: "datetime")]
+    private \DateTimeInterface $createdAt;
+
+    #[ORM\Column(type: "datetime", nullable: true)]
+    private ?\DateTimeInterface $updatedAt = null;
+
+    #[ORM\PrePersist]
+    public function setCreatedAt(): void
+    {
+        $this->createdAt = new DateTime();
+    }
+
+    #[ORM\PreUpdate]
+    public function setUpdatedAt(): void
+    {
+        $this->updatedAt = new DateTime();
+    }
+
+    public function getCreatedAt(): DateTime
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): ?DateTime
+    {
+        return $this->updatedAt;
+    }
 
     public function __construct()
     {
@@ -119,7 +152,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getUserIdentifier(): string
     {
-        return (string)$this->email;
+        return (string) $this->email;
     }
 
     /**
@@ -148,7 +181,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $roles = $this->roles;
         // guarantee every user at least has ROLE_USER
-        $roles[] = 'ROLE_USER';
+        $roles[] = "ROLE_USER";
 
         return array_unique($roles);
     }
@@ -326,8 +359,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->timeSendResetPasswordLink;
     }
 
-    public function setTimeSendResetPasswordLink(?DateTime $timeSendResetPasswordLink): void
-    {
+    public function setTimeSendResetPasswordLink(
+        ?DateTime $timeSendResetPasswordLink,
+    ): void {
         $this->timeSendResetPasswordLink = $timeSendResetPasswordLink;
     }
 
