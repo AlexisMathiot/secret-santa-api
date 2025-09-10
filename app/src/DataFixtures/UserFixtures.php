@@ -9,35 +9,42 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserFixtures extends Fixture
 {
-
-    public function __construct(private readonly UserPasswordHasherInterface $userPasswordHasher)
-    {
-
-    }
+    public function __construct(
+        private readonly UserPasswordHasherInterface $userPasswordHasher,
+    ) {}
 
     public function load(ObjectManager $manager): void
     {
         // Création d'un user
         $user = new User();
-        $user->setUsername('Tata');
+        $user->setUsername("Tata");
         $user->setEmail("user@santaapi.com");
         $user->setRoles(["ROLE_USER"]);
-        $user->setPassword($this->userPasswordHasher->hashPassword($user, "password"));
+        $user->setPassword(
+            $this->userPasswordHasher->hashPassword($user, "password"),
+        );
+        $user->setCreatedAt();
         $manager->persist($user);
 
         $user = new User();
-        $user->setUsername('Alex');
+        $user->setUsername("Alex");
         $user->setEmail("alex@santaapi.com");
         $user->setRoles(["ROLE_USER"]);
-        $user->setPassword($this->userPasswordHasher->hashPassword($user, "password"));
+        $user->setPassword(
+            $this->userPasswordHasher->hashPassword($user, "password"),
+        );
+        $user->setCreatedAt();
         $manager->persist($user);
 
         // Création d'un user admin
         $userAdmin = new User();
-        $userAdmin->setUsername('Admin');
+        $userAdmin->setUsername("Admin");
         $userAdmin->setEmail("admin@santaapi.com");
         $userAdmin->setRoles(["ROLE_ADMIN"]);
-        $userAdmin->setPassword($this->userPasswordHasher->hashPassword($userAdmin, "password"));
+        $userAdmin->setPassword(
+            $this->userPasswordHasher->hashPassword($userAdmin, "password"),
+        );
+        $userAdmin->setCreatedAt();
         $manager->persist($userAdmin);
 
         $manager->flush();

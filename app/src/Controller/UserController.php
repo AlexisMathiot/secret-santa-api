@@ -28,9 +28,7 @@ class UserController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
         $userArray = $userData->userDataToArray($user);
-        $jsonUser = $serializer->serialize($userArray, "json", [
-            "groups" => "userDetail",
-        ]);
+        $jsonUser = $serializer->serialize($userArray, "json");
 
         return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
     }
