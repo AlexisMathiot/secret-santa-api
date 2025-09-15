@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Dto\EventUpdateDto;
 use App\Dto\EventCreateDto;
 use App\Entity\Event;
 use App\Entity\User;
@@ -24,9 +25,9 @@ use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\Requirement\Requirement;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 
 #[Route("/api/events")]
 #[
@@ -280,7 +281,7 @@ class EventController extends AbstractController
         }
 
         $event = new Event();
-        $event->setName($dto->title);
+        $event->setName($dto->name);
 
         $event->setOrganizer($user);
 
@@ -305,32 +306,41 @@ class EventController extends AbstractController
         );
     }
 
-    #[Route("/{id}", name: "edit_event", methods: ["PUT"])]
+    #[Route("/{id}", name: "api_event_update", methods: ["PUT"])]
     #[
         OA\Put(
-            path: "/api/events/{id}",
             summary: "Modifier un événement",
-            description: "Modifie un événement existant (seuls les organisateurs peuvent modifier)",
+            description: 'Modifie un événement existant. Seuls les organisateurs de l\'événement et les administrateurs peuvent effectuer cette modification.',
             tags: ["Gestion des événements"],
         ),
     ]
     #[
         OA\Parameter(
             name: "id",
-            description: 'Identifiant de l\'événement à modifier',
+            description: 'Identifiant unique de l\'événement à modifier',
             in: "path",
             required: true,
-            schema: new OA\Schema(type: "integer", example: 1),
+            schema: new OA\Schema(type: "integer", minimum: 1),
         ),
     ]
     #[
         OA\RequestBody(
             description: 'Nouvelles données de l\'événement',
             required: true,
-            content: new OA\JsonContent(ref: new Model(type: Event::class)),
+            content: new OA\JsonContent(
+                ref: new Model(type: EventUpdateDto::class),
+            ),
         ),
     ]
-    #[OA\Response(response: 204, description: "Événement modifié avec succès")]
+    #[
+        OA\Response(
+            response: 200,
+            description: "Événement modifié avec succès",
+            content: new OA\JsonContent(
+                ref: new Model(type: Event::class, groups: ["eventDetail"]),
+            ),
+        ),
+    ]
     #[
         OA\Response(
             response: 400,
@@ -338,25 +348,10 @@ class EventController extends AbstractController
             content: new OA\JsonContent(
                 type: "object",
                 properties: [
-                    new OA\Property(
-                        property: "errors",
-                        type: "array",
-                        items: new OA\Items(type: "string"),
-                    ),
-                ],
-            ),
-        ),
-    ]
-    #[
-        OA\Response(
-            response: 401,
-            description: "Non authentifié",
-            content: new OA\JsonContent(
-                properties: [
-                    new OA\Property(
+                    "error" => new OA\Property(
                         property: "error",
                         type: "string",
-                        example: "JWT Token not found",
+                        example: "Organisateur non trouvé",
                     ),
                 ],
             ),
@@ -365,13 +360,14 @@ class EventController extends AbstractController
     #[
         OA\Response(
             response: 403,
-            description: 'Accès interdit - Seul l\'organisateur peut modifier l\'événement',
+            description: "Permissions insuffisantes",
             content: new OA\JsonContent(
+                type: "object",
                 properties: [
-                    new OA\Property(
+                    "error" => new OA\Property(
                         property: "error",
                         type: "string",
-                        example: "Access Denied",
+                        example: "Permissions insuffisantes",
                     ),
                 ],
             ),
@@ -382,42 +378,92 @@ class EventController extends AbstractController
             response: 404,
             description: "Événement non trouvé",
             content: new OA\JsonContent(
+                type: "object",
                 properties: [
-                    new OA\Property(
+                    "error" => new OA\Property(
                         property: "error",
                         type: "string",
-                        example: "Event not found",
+                        example: "Événement non trouvé",
                     ),
                 ],
             ),
         ),
     ]
     #[Security(name: "Bearer")]
-    public function editEvent(
-        Event $currentEvent,
-        Request $request,
+    public function updateEvent(
+        int $id,
+        #[MapRequestPayload] EventUpdateDto $updateEventDto,
+        EventRepository $eventRepository,
+        UserRepository $userRepository,
+        EntityManagerInterface $entityManager,
+        SerializerInterface $serializer,
     ): JsonResponse {
-        $this->denyAccessUnlessGranted("edit", $currentEvent);
-
-        $this->serializer->deserialize(
-            $request->getContent(),
-            Event::class,
-            "json",
-            [AbstractNormalizer::OBJECT_TO_POPULATE => $currentEvent],
-        );
-
-        $validation = $this->validationService->validateEvent($currentEvent);
-        if (!$validation["isValid"]) {
+        // Récupération de l'événement
+        $event = $eventRepository->find($id);
+        if (!$event) {
             return new JsonResponse(
-                $this->serializer->serialize($validation["errors"], "json"),
-                Response::HTTP_BAD_REQUEST,
+                ["error" => "Événement non trouvé"],
+                Response::HTTP_NOT_FOUND,
             );
         }
 
-        $this->entityManager->persist($currentEvent);
-        $this->entityManager->flush();
+        /** @var User $currentUser */
+        $currentUser = $this->getUser();
 
-        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        // Vérification des permissions
+        $isAdmin = in_array("ROLE_ADMIN", $currentUser->getRoles());
+        $isOrganizer = $event->getOrganizer() === $currentUser;
+
+        if (!$isAdmin && !$isOrganizer) {
+            return new JsonResponse(
+                [
+                    "error" =>
+                        'Vous n\'avez pas les permissions pour modifier cet événement',
+                ],
+                Response::HTTP_FORBIDDEN,
+            );
+        }
+
+        // Mise à jour du nom si fourni
+        if ($updateEventDto->getName() !== null) {
+            $event->setName($updateEventDto->getName());
+        }
+
+        // Mise à jour de l'organisateur (seulement pour les admins)
+        if ($updateEventDto->getOrganizerId() !== null) {
+            if (!$isAdmin) {
+                return new JsonResponse(
+                    [
+                        "error" =>
+                            'Seuls les administrateurs peuvent changer l\'organisateur d\'un événement',
+                    ],
+                    Response::HTTP_FORBIDDEN,
+                );
+            }
+
+            $newOrganizer = $userRepository->find(
+                $updateEventDto->getOrganizerId(),
+            );
+            if (!$newOrganizer) {
+                return new JsonResponse(
+                    [
+                        "error" => "Organisateur non trouvé",
+                    ],
+                    Response::HTTP_BAD_REQUEST,
+                );
+            }
+
+            $event->setOrganizer($newOrganizer);
+        }
+
+        $entityManager->flush();
+
+        // Sérialisation de l'événement mis à jour
+        $jsonEvent = $serializer->serialize($event, "json", [
+            "groups" => ["eventDetail"],
+        ]);
+
+        return new JsonResponse($jsonEvent, Response::HTTP_OK, [], true);
     }
 
     #[
@@ -702,7 +748,7 @@ class EventController extends AbstractController
         $this->santaService->removeSantaAssignmentsForUser($event, $user);
 
         // Retirer l'utilisateur de l'événement
-        $message = $this->eventService->removeUserFromEvent($user, $event, $em);
+        $message = $this->eventService->removeUserFromEvent($user, $event);
 
         return new JsonResponse($message, Response::HTTP_OK);
     }

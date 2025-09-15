@@ -18,6 +18,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use OpenApi\Attributes as OA;
 
 class SecurityController extends AbstractController
 {
@@ -51,7 +52,7 @@ class SecurityController extends AbstractController
 
             $baseUrl = $this->getParameter("app.front_base_url");
 
-            $url = $baseUrl . "/reset-password/" . $token;
+            $url = "{$baseUrl}/reset-password/{$token}";
 
             $context = compact("url", "user");
 
@@ -190,11 +191,157 @@ class SecurityController extends AbstractController
         return new Response(status: 200);
     }
 
-    #[Route('/api/login_check', name: 'api_login', methods: ['POST'])]
+    #[Route("/api/login_check", name: "api_login", methods: ["POST"])]
+    #[
+        OA\Post(
+            path: "/api/login_check",
+            operationId: "login",
+            summary: "Authentification utilisateur",
+            description: "Authentifie un utilisateur et retourne un token JWT",
+            tags: ["Authentification"],
+        ),
+    ]
+    #[
+        OA\RequestBody(
+            description: "Identifiants de connexion",
+            required: true,
+            content: new OA\JsonContent(
+                type: "object",
+                required: ["email", "password"],
+                properties: [
+                    new OA\Property(
+                        property: "email",
+                        type: "string",
+                        format: "email",
+                        description: 'Adresse email de l\'utilisateur',
+                        example: "user@example.com",
+                    ),
+                    new OA\Property(
+                        property: "password",
+                        type: "string",
+                        format: "password",
+                        description: 'Mot de passe de l\'utilisateur',
+                        example: "motdepasse123",
+                    ),
+                ],
+            ),
+        ),
+    ]
+    #[
+        OA\Response(
+            response: 200,
+            description: "Authentification réussie",
+            content: new OA\JsonContent(
+                type: "object",
+                properties: [
+                    new OA\Property(
+                        property: "token",
+                        type: "string",
+                        description: 'Token JWT pour l\'authentification',
+                        example: "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...",
+                    ),
+                    new OA\Property(
+                        property: "refresh_token",
+                        type: "string",
+                        description: "Token de rafraîchissement (optionnel)",
+                        example: "def502003c4f5c8b7e7c...",
+                    ),
+                    new OA\Property(
+                        property: "user",
+                        type: "object",
+                        description: "Informations utilisateur (optionnel)",
+                        properties: [
+                            new OA\Property(
+                                property: "id",
+                                type: "integer",
+                                example: 1,
+                            ),
+                            new OA\Property(
+                                property: "email",
+                                type: "string",
+                                example: "user@example.com",
+                            ),
+                            new OA\Property(
+                                property: "roles",
+                                type: "array",
+                                items: new OA\Items(type: "string"),
+                                example: ["ROLE_USER"],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ),
+    ]
+    #[
+        OA\Response(
+            response: 401,
+            description: "Identifiants invalides",
+            content: new OA\JsonContent(
+                type: "object",
+                properties: [
+                    new OA\Property(
+                        property: "code",
+                        type: "integer",
+                        example: 401,
+                    ),
+                    new OA\Property(
+                        property: "message",
+                        type: "string",
+                        example: "Invalid credentials.",
+                    ),
+                ],
+            ),
+        ),
+    ]
+    #[
+        OA\Response(
+            response: 400,
+            description: "Données manquantes ou invalides",
+            content: new OA\JsonContent(
+                type: "object",
+                properties: [
+                    new OA\Property(
+                        property: "code",
+                        type: "integer",
+                        example: 400,
+                    ),
+                    new OA\Property(
+                        property: "message",
+                        type: "string",
+                        example: "Bad Request",
+                    ),
+                ],
+            ),
+        ),
+    ]
+    #[
+        OA\Response(
+            response: 429,
+            description: "Trop de tentatives de connexion",
+            content: new OA\JsonContent(
+                type: "object",
+                properties: [
+                    new OA\Property(
+                        property: "code",
+                        type: "integer",
+                        example: 429,
+                    ),
+                    new OA\Property(
+                        property: "message",
+                        type: "string",
+                        example: "Too many login attempts, please try again later.",
+                    ),
+                ],
+            ),
+        ),
+    ]
     public function login(): void
     {
         // Cette méthode ne sera jamais exécutée car Symfony intercepte la requête
         // Elle sert juste à créer la route pour que Symfony puisse l'intercepter
-        throw new \LogicException('This method can be blank - it will be intercepted by the login key on your firewall.');
+        throw new \LogicException(
+            "This method can be blank - it will be intercepted by the login key on your firewall.",
+        );
     }
 }

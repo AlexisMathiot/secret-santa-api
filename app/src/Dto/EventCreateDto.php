@@ -8,5 +8,5 @@ class EventCreateDto
 {
     #[Assert\NotBlank]
     #[Assert\Length(min: 3, max: 100)]
-    public string $title;
+    public string $name;
 }

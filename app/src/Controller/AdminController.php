@@ -175,10 +175,7 @@ class AdminController extends AbstractController
         UserData $userData,
     ): JsonResponse {
         $userArray = $userData->userDataToArray($user);
-        $jsonUser = $serializer->serialize($userArray, "json", [
-            "groups" => "userDetail",
-        ]);
-        return new JsonResponse($jsonUser, Response::HTTP_OK, [], true);
+        return new JsonResponse($userArray, Response::HTTP_OK, [], true);
     }
 
     #[Route("/api/admin/user/{id}", name: "user_delete", methods: ["DELETE"])]
@@ -538,7 +535,7 @@ class AdminController extends AbstractController
             }
 
             // Mise à jour de la date de modification
-            $user->setUpdatedAt(new \DateTime());
+            $user->setUpdatedAt();
 
             // Sauvegarde
             $em->persist($user);

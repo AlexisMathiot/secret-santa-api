@@ -179,8 +179,6 @@ class AdminUpdateUserDto
     {
         return $this->email !== null ||
             $this->password !== null ||
-            $this->firstname !== null ||
-            $this->lastname !== null ||
             $this->pseudo !== null ||
             $this->roles !== null;
     }
