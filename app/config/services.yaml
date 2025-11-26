@@ -68,6 +68,7 @@ services:
       $registrationService: '@App\Security\OAuthRegistrationService'
       $jwtManager: "@lexik_jwt_authentication.jwt_manager"
       $eventDispatcher: "@event_dispatcher"
+      $frontBaseUrl: "%app.front_base_url%"
 
   App\Security\GoogleAuthenticator:
     parent: App\Security\AbstractOAuthAuthenticator

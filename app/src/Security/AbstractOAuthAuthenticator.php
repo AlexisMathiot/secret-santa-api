@@ -14,6 +14,7 @@ use Lexik\Bundle\JWTAuthenticationBundle\Events;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
@@ -33,7 +34,8 @@ abstract class AbstractOAuthAuthenticator extends OAuth2Authenticator
         private readonly UserRepository $userRepository,
         private readonly OAuthRegistrationService $registrationService,
         private readonly JWTTokenManagerInterface $jwtManager,
-        private readonly EventDispatcherInterface $eventDispatcher
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly string $frontBaseUrl
     ) {}
 
     public function supports(Request $request): ?bool
@@ -45,30 +47,24 @@ abstract class AbstractOAuthAuthenticator extends OAuth2Authenticator
     {
         /** @var User $user */
         $user = $token->getUser();
-        
+
         // Génération du token JWT via LexikJWT
         $jwt = $this->jwtManager->create($user);
-        
-        // Créer la réponse dans le même format que LexikJWT
-        $data = ['token' => $jwt];
-        $response = new JsonResponse($data);
-        
-        // Déclencher le même événement que LexikJWT pour la cohérence
-        // (si vous avez des listeners sur cet événement)
-        $event = new AuthenticationSuccessEvent($data, $user, $response);
-        $this->eventDispatcher->dispatch($event, Events::AUTHENTICATION_SUCCESS);
-                
-        // Récupérer les données potentiellement modifiées par les listeners
-        $response->setData($event->getData());
-        
-        return $response;
+
+        // Redirection vers le frontend avec le token JWT en query parameter
+        $callbackUrl = $this->frontBaseUrl . '/auth/google/callback?token=' . urlencode($jwt);
+
+        return new RedirectResponse($callbackUrl);
     }
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
         $message = strtr($exception->getMessageKey(), $exception->getMessageData());
 
-        return new JsonResponse(['error' => $message], Response::HTTP_FORBIDDEN);
+        // Redirection vers le frontend avec le message d'erreur en query parameter
+        $errorUrl = $this->frontBaseUrl . '/auth/google/callback?error=' . urlencode($message);
+
+        return new RedirectResponse($errorUrl);
     }
 
     public function authenticate(Request $request): Passport
